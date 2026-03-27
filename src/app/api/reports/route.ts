@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 interface PriceInfo {
   price: number;
   unit: string;
@@ -12,12 +14,16 @@ type PriceMap = Record<string, PriceInfo>;
 
 export async function GET() {
   try {
+    // Check if prisma is initialized
+    if (!prisma) {
+      throw new Error('Prisma client not initialized');
+    }
+
     const [stations, prices] = await Promise.all([
       prisma.station.findMany({
         include: {
           reports: {
             where: {
-              // Only count reports from the last 24 hours for current status
               createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
             },
             orderBy: { createdAt: 'desc' },
@@ -26,7 +32,10 @@ export async function GET() {
         }
       }),
       prisma.globalPrice.findMany()
-    ]);
+    ]).catch(err => {
+      console.error('Database Query Error:', err);
+      throw new Error(`Database connection failed: ${err.message}`);
+    });
 
     const priceMap = prices.reduce((acc: PriceMap, p) => {
       // Simulate live market fluctuation (jitter of +/- 0.05%)
@@ -72,9 +81,13 @@ export async function GET() {
       stations: processedStations,
       prices: priceMap
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('GET /api/reports error:', error);
-    return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to fetch reports', 
+      message: error.message || 'Internal Server Error',
+      hint: 'Verify DATABASE_URL in Vercel settings and ensure the DB has been initialized.'
+    }, { status: 500 });
   }
 }
 
