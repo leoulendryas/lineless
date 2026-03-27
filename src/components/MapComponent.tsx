@@ -22,13 +22,19 @@ interface GlobalPrice {
 
 interface FuelStatus {
   latest: {
-    id?: string;
+    id: string;
     status: 'Available' | 'Out of Stock' | 'Unknown';
     queue: 'No Line' | 'Short' | 'Medium' | 'Long' | 'Unknown';
     upvotes: number;
     downvotes: number;
     lastUpdated?: string;
     createdAt?: string;
+    userId?: string;
+    user?: {
+      trustScore: number;
+      username?: string;
+      firstName?: string;
+    };
   } | null;
   stats: {
     available: number;
@@ -120,7 +126,27 @@ const MapComponent: React.FC = () => {
   useEffect(() => { 
     fetchAllStations(); 
     checkUser();
-  }, []);
+
+    // Close sidebar on mobile by default
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setShowSidebar(false);
+    }
+
+    // Auto-locate user on mount
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          setUserLocation(loc);
+          if (mapRef) mapRef.flyTo(loc, 15);
+        },
+        () => {
+          console.log('Location access declined - defaulting to center.');
+        },
+        { timeout: 10000 }
+      );
+    }
+  }, [mapRef]);
 
   const checkUser = async () => {
     try {
@@ -249,6 +275,22 @@ const MapComponent: React.FC = () => {
       if (mapRef) mapRef.flyTo([pos.coords.latitude, pos.coords.longitude], 15);
       setUserLocation([pos.coords.latitude, pos.coords.longitude]);
     });
+  };
+
+  const handleVote = async (reportId: string, action: 'upvote' | 'downvote') => {
+    if (!user) return setShowAuthPrompt(true);
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, action })
+      });
+      if (res.ok) fetchAllStations();
+      else {
+        const errorData = await res.json();
+        if (errorData.error) alert(errorData.error);
+      }
+    } catch (e) { console.error('Vote failed', e); }
   };
 
   const filteredStations = stations.filter(s => filter === 'all' || s.type === filter);
@@ -470,10 +512,11 @@ const MapComponent: React.FC = () => {
                       </div>
                       {station.type === 'fuel' || station.type === 'charging' ? (
                         <div className="space-y-4">
-                          <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} />
-                          <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900" getQueueLabel={getQueueLabel} />
-                          {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} />}
+                          <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                          <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                          {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
                         </div>
+
                       ) : station.type === 'parking' ? (
                         <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-sm">
                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Vehicle Storage Facility</span>
@@ -593,8 +636,17 @@ const StationMiniFeed = ({ label, report, activeColor }: { label: string, report
   );
 };
 
-const DetailedStatus = ({ label, report, colorClass, getQueueLabel }: { label: string, report: FuelStatus & { price: GlobalPrice | null }, colorClass: string, getQueueLabel: (q: string) => string }) => {
+const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, userId }: { 
+  label: string, 
+  report: FuelStatus & { price: GlobalPrice | null }, 
+  colorClass: string, 
+  getQueueLabel: (q: string) => string,
+  onVote: (id: string, action: 'upvote' | 'downvote') => void,
+  userId?: string
+}) => {
   const isAvailable = report.latest?.status === 'Available';
+  const latest = report.latest;
+  
   return (
     <div className="bg-zinc-50 p-5 rounded-sm border border-zinc-100 flex flex-col gap-4">
       <div className="flex justify-between items-center">
@@ -604,10 +656,46 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel }: { label: s
         </div>
         <div className={`px-3 py-1.5 rounded-sm text-[8px] font-black uppercase tracking-widest border ${isAvailable ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-300 border-zinc-200'}`}>{report.latest?.status || 'N/A'}</div>
       </div>
-      <div className="flex justify-between items-center">
+      
+      <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-1">
         <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Queue: <span className="text-zinc-900">{getQueueLabel(report.latest?.queue || '')}</span></span>
-        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 opacity-40">{report.stats.total} REPORTS</span>
+        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 opacity-40 uppercase">{report.stats.total} REPORTS</span>
       </div>
+
+      {latest && (
+        <div className="flex items-center justify-between gap-4 pt-1">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 leading-none mb-1">Contributor</span>
+              <div className="flex items-center gap-1.5">
+                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-900 italic">{latest.user?.firstName || 'Anonymous'}</span>
+                 <span className="bg-zinc-900 text-white text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest border border-zinc-800">TRUST: {latest.user?.trustScore || 0}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onVote(latest.id, 'upvote'); }}
+              disabled={latest.userId === userId}
+              title={latest.userId === userId ? "Cannot vote on your own report" : "Upvote reliability"}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white border-zinc-200 hover:border-zinc-900 active:scale-95'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900"><path d="m18 15-6-6-6 6"/></svg>
+              <span className="text-[9px] font-black text-zinc-900">{latest.upvotes}</span>
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onVote(latest.id, 'downvote'); }}
+              disabled={latest.userId === userId}
+              title={latest.userId === userId ? "Cannot vote on your own report" : "Report inaccuracy"}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white border-zinc-200 hover:border-zinc-900 active:scale-95'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900"><path d="m6 9 6 6 6-6"/></svg>
+              <span className="text-[9px] font-black text-zinc-900">{latest.downvotes}</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

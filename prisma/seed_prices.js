@@ -4,9 +4,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   const prices = [
-    { fuelType: 'Benzene', price: 91.14, unit: 'ETB/L' },
-    { fuelType: 'Gasoline', price: 92.50, unit: 'ETB/L' },
-    { fuelType: 'Electric', price: 1.50, unit: 'ETB/kWh' },
+    { fuelType: 'Benzene', price: 132.18, unit: 'ETB/L' }, // Gasoline
+    { fuelType: 'Gasoline', price: 139.84, unit: 'ETB/L' }, // White Diesel
+    { fuelType: 'Electric', price: 10.00, unit: 'ETB/kWh' }, // Public Charging
   ];
 
   for (const price of prices) {

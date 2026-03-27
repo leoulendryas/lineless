@@ -100,12 +100,41 @@ export async function POST(request: Request) {
     const { externalId, name, type, lat, lon, fuelType, status, queue, reportId, action } = body;
 
     if (reportId && action) {
-      const updateData = action === 'upvote' ? { upvotes: { increment: 1 } } : { downvotes: { increment: 1 } };
-      const report = await prisma.report.update({
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const report = await prisma.report.findUnique({
+        where: { id: reportId },
+        include: { user: true }
+      });
+
+      if (!report) {
+        return NextResponse.json({ error: 'Report not found' }, { status: 404 });
+      }
+
+      // Prevent voting on own report
+      if (report.userId === userId) {
+        return NextResponse.json({ error: 'Cannot vote on your own report' }, { status: 400 });
+      }
+
+      const isUpvote = action === 'upvote';
+      const updateData = isUpvote ? { upvotes: { increment: 1 } } : { downvotes: { increment: 1 } };
+      
+      const updatedReport = await prisma.report.update({
         where: { id: reportId },
         data: updateData
       });
-      return NextResponse.json({ report });
+
+      // Update author's trust score
+      if (report.userId) {
+        await prisma.user.update({
+          where: { id: report.userId },
+          data: { trustScore: { increment: isUpvote ? 1 : -1 } }
+        });
+      }
+
+      return NextResponse.json({ report: updatedReport });
     }
 
     if (!userId) {

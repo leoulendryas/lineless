@@ -8,51 +8,47 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  telegramId   String   @unique
-  firstName    String?
-  lastName     String?
-  username     String?
-  photoUrl     String?
-  trustScore   Int      @default(0)
-  reports      Report[]
-  createdAt    DateTime @default(now())
+  id         String   @id @default(cuid())
+  telegramId String   @unique
+  firstName  String?
+  lastName   String?
+  username   String?
+  photoUrl   String?
+  trustScore Int      @default(0)
+  createdAt  DateTime @default(now())
+  reports    Report[]
 }
 
 model Station {
-  id          String   @id @default(cuid())
-  externalId  String   @unique
-  name        String
-  type        String
-  lat         Float
-  lon         Float
-  reports     Report[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  name       String
+  type       String
+  lat        Float
+  lon        Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  reports    Report[]
 }
 
 model Report {
-  id          String   @id @default(cuid())
-  stationId   String
-  station     Station  @relation(fields: [stationId], references: [id])
-  
-  fuelType    String   // 'Benzene', 'Gasoline', 'Electric'
-  status      String   // 'Available', 'Out of Stock'
-  queue       String   // 'No Line', 'Short', 'Medium', 'Long'
-  
-  // Trust System
-  upvotes     Int      @default(0)
-  downvotes   Int      @default(0)
-  
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  stationId String
+  fuelType  String
+  status    String
+  queue     String
+  upvotes   Int      @default(0)
+  downvotes Int      @default(0)
+  userId    String?
+  createdAt DateTime @default(now())
+  station   Station  @relation(fields: [stationId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model GlobalPrice {
-  id          String   @id @default(cuid())
-  fuelType    String   @unique // 'Benzene', 'Gasoline', 'Electric'
-  price       Float
-  unit        String   // 'ETB/L', 'ETB/kWh'
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  fuelType  String   @unique
+  price     Float
+  unit      String
+  updatedAt DateTime @updatedAt
 }
