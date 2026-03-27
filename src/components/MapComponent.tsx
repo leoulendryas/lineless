@@ -309,7 +309,7 @@ const MapComponent: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <TelegramLogin botName="lineless_help_bot" authUrl="/api/auth/telegram" />
+                <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} />
               )}
               <button onClick={() => setShowSidebar(false)} className="p-2 hover:bg-zinc-50 border border-transparent hover:border-zinc-200 rounded-sm transition-all text-zinc-900">
                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -512,7 +512,7 @@ const MapComponent: React.FC = () => {
             <h3 className="font-black text-2xl text-zinc-900 tracking-tighter mb-4 uppercase italic">Verification Required</h3>
             <p className="text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em] mb-10 leading-relaxed">Please authenticate via Telegram to contribute to the grid status.</p>
             <div className="flex justify-center scale-110">
-              <TelegramLogin botName="lineless_help_bot" authUrl="/api/auth/telegram" />
+              <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} />
             </div>
           </div>
         </div>
