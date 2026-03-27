@@ -7,9 +7,10 @@ interface TelegramLoginProps {
   onAuth?: (user: any) => void;
   authUrl?: string;
   className?: string;
+  children?: React.ReactNode;
 }
 
-const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl, className }) => {
+const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl, className, children }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl,
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', botName);
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-radius', '4');
+    script.setAttribute('data-radius', '0'); // Square corners to match aesthetic
     
     if (authUrl) {
       script.setAttribute('data-auth-url', authUrl);
@@ -45,7 +46,19 @@ const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl,
     };
   }, [botName, onAuth, authUrl]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div className={`relative ${className}`}>
+      {children && (
+        <div className="absolute inset-0 z-10 pointer-events-none">
+          {children}
+        </div>
+      )}
+      <div 
+        ref={containerRef} 
+        className={children ? "opacity-0 absolute inset-0 z-20 [&>iframe]:!w-full [&>iframe]:!h-full" : ""}
+      />
+    </div>
+  );
 };
 
 export default TelegramLogin;
