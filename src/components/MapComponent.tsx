@@ -154,34 +154,18 @@ const MapComponent: React.FC = () => {
     setScanning(true);
     setSyncFailed(null);
     try {
-      const query = `[out:json][timeout:90];(nwr["amenity"~"fuel|charging_station|parking|car_wash"](8.80,38.50,9.20,39.10);nwr["brand"~"Total|NOC|OLA|Yetebaberut|Gomeju|Kobil|TAF|Dalol|Global|Nile|Hambissa|Wodaj|Tulu|OiLibya|Horizon"](8.80,38.50,9.20,39.10););out center;`;
+      const query = `[out:json][timeout:60];(nwr["amenity"~"fuel|charging_station|parking|car_wash"](8.80,38.50,9.20,39.10);nwr["brand"~"Total|NOC|OLA|Yetebaberut|Gomeju|Kobil|TAF|Dalol|Global|Nile|Hambissa|Wodaj|Tulu|OiLibya|Horizon"](8.80,38.50,9.20,39.10););out center;`;
+      const osmResponse = await fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+      if (!osmResponse.ok) throw new Error(`Link Error: ${osmResponse.status}`);
+      const contentType = osmResponse.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) throw new Error('Invalid format');
       
-      const osmPromise = fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
-        .then(async (res) => {
-          if (!res.ok) throw new Error(`OSM Server Status: ${res.status}`);
-          const contentType = res.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) throw new Error('Invalid OSM format');
-          return res.json();
-        });
-
-      const dbPromise = fetch('/api/reports').then(res => res.json());
-
-      const [osmData, dbData] = await Promise.all([
-        osmPromise.catch(err => {
-          console.error('Overpass API error:', err);
-          return { elements: [] }; // Fallback to empty if OSM is down
-        }),
-        dbPromise.catch(err => {
-          console.error('Database API error:', err);
-          return { stations: [], prices: {} };
-        })
-      ]);
-
-      const dbStations = dbData.stations || [];
-      const prices = dbData.prices || {};
+      const osmData = await osmResponse.json();
+      const dbResponse = await fetch('/api/reports');
+      const { stations: dbStations, prices } = await dbResponse.json();
       setGlobalPrices(prices);
 
-      const mappedOSM = (osmData.elements || []).map((el: OSMElement) => {
+      const mappedOSM = osmData.elements.map((el: OSMElement) => {
         const lat = el.lat || el.center?.lat;
         const lon = el.lon || el.center?.lon;
         if (!lat || !lon) return null;
