@@ -451,7 +451,9 @@ const MapComponent: React.FC = () => {
                 {isActive && (
                   <Popup 
                     className="better-auth-popup" 
-                    onClose={() => setActivePopupId(null)}
+                    eventHandlers={{ 
+                      remove: () => setActivePopupId(null) 
+                    }}
                     autoPan={true}
                   >
                     <div className="min-w-[280px] md:min-w-[340px] p-2">
