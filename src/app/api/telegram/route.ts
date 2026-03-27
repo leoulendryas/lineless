@@ -33,13 +33,29 @@ bot.command('report', async (ctx) => {
 
     const station = stations[0];
     
+    // Find or create the user from Telegram data
+    const user = await prisma.user.upsert({
+      where: { telegramId: String(ctx.from.id) },
+      update: {
+        username: ctx.from.username,
+        firstName: ctx.from.first_name,
+        lastName: ctx.from.last_name,
+      },
+      create: {
+        telegramId: String(ctx.from.id),
+        username: ctx.from.username,
+        firstName: ctx.from.first_name,
+        lastName: ctx.from.last_name,
+      },
+    });
+    
     await prisma.report.create({
       data: {
         stationId: station.id,
         fuelType: station.type === 'fuel' ? 'Benzene' : 'Electric',
         status: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
         queue: queue.charAt(0).toUpperCase() + queue.slice(1).toLowerCase(),
-        reporter: `Telegram:${ctx.from.username || ctx.from.id}`
+        userId: user.id
       }
     });
 
