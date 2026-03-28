@@ -358,72 +358,74 @@ const MapComponent: React.FC = () => {
   return (
     <div className="flex h-full w-full overflow-hidden bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-900 selection:text-white transition-colors duration-500 relative">
       {/* Sidebar Terminal */}
-      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
+      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
         <div className="p-6 md:p-10 pb-6 flex flex-col gap-8 md:gap-10 relative">
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <div className="w-10 h-10 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="24" height="24" fill="white"/>
-                    <path d="M4 4V20H20" stroke="#18181b" strokeWidth="4" strokeLinecap="square"/>
-                    <path d="M12 4L12 12" stroke="#18181b" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                    <rect width="24" height="24" className="fill-white dark:fill-zinc-900"/>
+                    <path d="M4 4V20H20" className="stroke-zinc-900 dark:stroke-zinc-50" strokeWidth="4" strokeLinecap="square"/>
+                    <path d="M12 4L12 12" className="stroke-zinc-900 dark:stroke-zinc-50" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
-                <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
+                <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-950 dark:text-zinc-50 italic uppercase">Lineless</h2>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setDarkMode(!darkMode)} 
-                className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
+                className="p-3 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
               >
                 {darkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
               {user ? (
                 <div className="flex items-center gap-3 group">
                   <div className="flex flex-col items-end">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 leading-none">{user.firstName}</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-50 leading-none">{user.firstName}</span>
                     <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 leading-none mt-1">Trust Score: {user.trustScore}</span>
                   </div>
                   {user.photoUrl ? (
                     <img src={user.photoUrl} alt="Avatar" className="w-10 h-10 rounded-sm border border-zinc-200 dark:border-zinc-800 grayscale hover:grayscale-0 transition-all cursor-pointer shadow-md" onClick={handleLogout} />
                   ) : (
-                    <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center rounded-sm border border-zinc-200 dark:border-zinc-800 text-[12px] font-black cursor-pointer text-zinc-900 dark:text-zinc-50 shadow-md" onClick={handleLogout}>{user.firstName?.[0]}</div>
+                    <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center rounded-sm border border-zinc-200 dark:border-zinc-800 text-[12px] font-black cursor-pointer text-zinc-950 dark:text-zinc-50 shadow-md" onClick={handleLogout}>{user.firstName?.[0]}</div>
                   )}
                 </div>
               ) : (
                 <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-[120px] h-[40px]">
-                  <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-2 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer">
-                    <Radio size={14} className="animate-pulse" />
+                  <div className="w-full h-full bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-2 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703l-.333 4.965c.487 0 .702-.223.974-.488l2.338-2.274l4.86 3.59c.896.494 1.54.24 1.763-.829l3.19-15.035c.326-1.306-.5-1.9-1.352-1.564z"/>
+                    </svg>
                     <span className="text-[9px] font-black uppercase tracking-widest">Connect</span>
                   </div>
                 </TelegramLogin>
               )}
-              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50 active:scale-90">
+              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800 rounded-sm transition-all text-zinc-950 dark:text-zinc-50 active:scale-90">
                  <X size={20} />
               </button>
             </div>
           </div>
           
           <div className="flex gap-2">
-             <button onClick={locateUser} className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><MapPin size={14} /> Locate</button>
-             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-4 px-4 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} /> Sync</button>
+             <button onClick={locateUser} className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-950 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><MapPin size={14} /> Locate</button>
+             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-4 px-4 bg-zinc-950 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} /> Sync</button>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
              <PriceCard label="Benzene" price={globalPrices?.Benzene} activeColor="bg-orange-500" />
-             <PriceCard label="Diesel" price={globalPrices?.Gasoline} activeColor="bg-zinc-900 dark:bg-zinc-100" />
+             <PriceCard label="Diesel" price={globalPrices?.Gasoline} activeColor="bg-zinc-950 dark:bg-zinc-100" />
              <PriceCard label="Electric" price={globalPrices?.Electric} activeColor="bg-blue-600" />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 space-y-8 no-scrollbar relative">
-          <div className="sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="sticky top-0 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-200 dark:border-zinc-800">
              <div className="relative">
-               <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="w-full p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-900 dark:text-zinc-50">
+               <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="w-full p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-950 dark:text-zinc-50">
                   <option value="all">Pool: {stations.length}</option>
                   <option value="fuel">Fuel Hubs</option>
                   <option value="charging">Energy Nodes</option>
@@ -442,11 +444,11 @@ const MapComponent: React.FC = () => {
                 const s = stations.find(s => s.id === activePopupId)!;
                 return (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-6 bg-white dark:bg-zinc-900 rounded-sm border-2 border-zinc-900 dark:border-zinc-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-colors">
+                    <div className="p-6 bg-white dark:bg-zinc-900 rounded-sm border-2 border-zinc-950 dark:border-zinc-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-colors">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex flex-col gap-1">
                           <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 flex items-center gap-2"><Radio size={10} className="animate-pulse" /> Active Node</span>
-                          <h3 className="font-black text-zinc-900 dark:text-zinc-50 tracking-tight text-xl uppercase italic leading-none">{s.name}</h3>
+                          <h3 className="font-black text-zinc-950 dark:text-zinc-50 tracking-tight text-xl uppercase italic leading-none">{s.name}</h3>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 ${s.type === 'fuel' ? 'bg-orange-500' : s.type === 'charging' ? 'bg-blue-600' : s.type === 'parking' ? 'bg-zinc-400' : 'bg-green-500'}`}></div>
                       </div>
@@ -461,7 +463,7 @@ const MapComponent: React.FC = () => {
                               if (user) setSelectedStation(s);
                               else setShowAuthPrompt(true);
                             }} 
-                            className="flex-1 py-4 px-4 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 shadow-lg border border-transparent dark:border-zinc-800"
+                            className="flex-1 py-4 px-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 shadow-lg border border-transparent dark:border-zinc-800"
                           >
                             Update Status
                           </button>
@@ -480,7 +482,7 @@ const MapComponent: React.FC = () => {
                 );
               })()
             ) : (
-              <div className="p-16 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-sm flex flex-col items-center justify-center text-center bg-zinc-50/50 dark:bg-zinc-900/20">
+              <div className="p-16 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-sm flex flex-col items-center justify-center text-center bg-white/50 dark:bg-zinc-900/20">
                 <div className="w-16 h-16 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-full mb-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
                   <MapPin size={24} className="text-zinc-300 dark:text-zinc-700" />
                 </div>
@@ -739,14 +741,14 @@ const PriceCard = ({ label, price, activeColor }: { label: string, price: Global
 );
 
 const AmenityItem = ({ label, available, icon }: { label: string, available: boolean, icon: React.ReactNode }) => (
-  <div className={`p-5 border-2 rounded-sm flex flex-col gap-4 transition-all ${available ? 'bg-white dark:bg-zinc-900 border-zinc-900 dark:border-zinc-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px]' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-900 opacity-30 grayscale'}`}>
+  <div className={`p-5 border-2 rounded-sm flex flex-col gap-4 transition-all ${available ? 'bg-white dark:bg-zinc-900 border-zinc-950 dark:border-zinc-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px]' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 opacity-30 grayscale'}`}>
     <div className="flex justify-between items-center">
-      <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${available ? 'bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600'}`}>
+      <div className={`w-10 h-10 flex items-center justify-center rounded-sm border-2 ${available ? 'bg-zinc-50 dark:bg-zinc-950 border-zinc-950 dark:border-zinc-50 text-zinc-950 dark:text-zinc-50' : 'bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-600'}`}>
         {icon}
       </div>
       {available && <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white dark:border-zinc-900 shadow-sm"></div>}
     </div>
-    <span className="text-[10px] font-black uppercase tracking-[0.1em] leading-none text-zinc-900 dark:text-zinc-50">{label}</span>
+    <span className="text-[10px] font-black uppercase tracking-[0.1em] leading-none text-zinc-950 dark:text-zinc-50">{label}</span>
   </div>
 );
 
