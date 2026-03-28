@@ -550,19 +550,19 @@ const MapComponent: React.FC = () => {
             iconCreateFunction={(cluster: any) => {
               const count = cluster.getChildCount();
               return L.divIcon({
-                html: `<div class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[11px] font-black w-10 h-10 rounded-sm flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] border border-white dark:border-zinc-900 hover:scale-110 transition-transform">${count}</div>`,
+                html: `<div class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-zinc-950 dark:text-zinc-50 text-[11px] font-black w-10 h-10 rounded-sm flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] border-2 border-zinc-950 dark:border-zinc-50 hover:scale-110 transition-transform">${count}</div>`,
                 className: 'custom-cluster-icon',
                 iconSize: [40, 40]
               });
             }}
-          >
+            >
             {filteredStations.map(station => {
               const isFuel = station.type === 'fuel';
               const isParking = station.type === 'parking';
               const isCarWash = station.type === 'car_wash';
               const colorClass = isFuel ? 'bg-orange-500' : isParking ? 'bg-zinc-400' : isCarWash ? 'bg-green-500' : 'bg-blue-600';
               const isActive = activePopupId === station.id;
-              
+
               return (
                 <Marker 
                   key={station.id} 
@@ -575,12 +575,13 @@ const MapComponent: React.FC = () => {
                   icon={L.divIcon({ 
                     className: '', 
                     html: zoomLevel < 12 
-                      ? `<div class="w-3 h-3 ${colorClass} rounded-full border-2 border-white dark:border-zinc-900 shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}"></div>` 
-                      : `<div class="w-8 h-8 ${colorClass} border-2 border-white dark:border-zinc-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] flex items-center justify-center text-[11px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
+                      ? `<div class="w-3 h-3 ${colorClass} rounded-full border-2 border-white dark:border-zinc-900 shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-950 dark:ring-zinc-50' : ''}"></div>` 
+                      : `<div class="w-8 h-8 ${colorClass} border border-white dark:border-zinc-950 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] flex items-center justify-center text-[11px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-950 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
                     iconSize: [32, 32], 
                     iconAnchor: [16, 16] 
                   })}
                 >
+
                   {isActive && (
                     <Popup 
                       className="better-auth-popup" 
@@ -710,8 +711,8 @@ const MapComponent: React.FC = () => {
         .dark .leaflet-container { background: #09090b; }
         .leaflet-marker-icon { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
         
-        .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 0px; padding: 0px; border: 3px solid #18181b; box-shadow: 12px 12px 0px 0px rgba(0,0,0,1); background: #ffffff; color: #09090b; overflow: hidden; }
-        .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #fafafa; color: #fafafa; box-shadow: 12px 12px 0px 0px rgba(255,255,255,0.15); }
+        .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 4px; padding: 0px; border: 2px solid #09090b; box-shadow: 5px 5px 0px 0px rgba(0,0,0,1); background: #ffffff; color: #09090b; overflow: hidden; }
+        .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #fafafa; color: #fafafa; box-shadow: 5px 5px 0px 0px rgba(255,255,255,0.15); }
         .better-auth-popup .leaflet-popup-content { margin: 0; width: auto !important; }
         .better-auth-popup .leaflet-popup-tip { display: none; }
         
