@@ -462,13 +462,14 @@ const MapComponent: React.FC = () => {
           className="h-full w-full grayscale-[0.2]" 
           zoomControl={false}
           ref={setMapRef}
+          tap={false}
         >
           <TileLayer attribution='&copy; CartoDB' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
           <MapEvents setZoom={setZoomLevel} />
           <MapRecenter location={userLocation} />
           
           {userLocation && (
-            <Marker position={userLocation} icon={L.divIcon({ className: '', html: '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
+            <Marker position={userLocation} bubblingMouseEvents={false} icon={L.divIcon({ className: '', html: '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
               <Popup className="better-auth-popup text-center">User Access Point</Popup>
             </Marker>
           )}
@@ -484,6 +485,7 @@ const MapComponent: React.FC = () => {
               <Marker 
                 key={station.id} 
                 position={[station.lat, station.lon]} 
+                bubblingMouseEvents={false}
                 eventHandlers={{ click: () => {
                    setActivePopupId(station.id);
                    // Remove auto-opening sidebar on click
