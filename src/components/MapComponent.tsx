@@ -365,16 +365,16 @@ const MapComponent: React.FC = () => {
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-zinc-900 dark:bg-zinc-50 flex items-center justify-center rounded-sm shadow-xl">
+                <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4V20H20" stroke={darkMode ? "#18181b" : "#ffffff"} strokeWidth="4" strokeLinecap="square"/>
-                    <path d="M12 4L12 12" stroke={darkMode ? "#18181b" : "#ffffff"} strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                    <path d="M4 4V20H20" stroke="#ffffff" strokeWidth="4" strokeLinecap="square"/>
+                    <path d="M12 4L12 12" stroke="#ffffff" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
                 <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-8">
               <button 
                 onClick={() => setDarkMode(!darkMode)} 
                 className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
@@ -409,7 +409,7 @@ const MapComponent: React.FC = () => {
           
           <div className="flex gap-2">
              <button onClick={locateUser} className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><MapPin size={14} /> Locate</button>
-             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-4 px-4 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800 dark:border-zinc-200 shadow-sm active:scale-95 flex items-center justify-center gap-2"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} /> Sync</button>
+             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-4 px-4 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} /> Sync</button>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -423,7 +423,7 @@ const MapComponent: React.FC = () => {
           <div className="sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-100 dark:border-zinc-800">
              <div className="relative">
                <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="w-full p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-900 dark:text-zinc-50">
-                  <option value="all">Infrastructure Pool: {stations.length}</option>
+                  <option value="all">Pool: {stations.length}</option>
                   <option value="fuel">Fuel Hubs</option>
                   <option value="charging">Energy Nodes</option>
                   <option value="parking">Parking Slots</option>
@@ -462,7 +462,7 @@ const MapComponent: React.FC = () => {
                             }} 
                             className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 shadow-lg border border-transparent dark:border-zinc-800"
                           >
-                            Broadcast Status
+                            Update Status
                           </button>
                         )}
                       </div>
@@ -501,7 +501,7 @@ const MapComponent: React.FC = () => {
         {/* Map Legend */}
         <div className="absolute bottom-8 right-8 z-[3000] flex flex-col gap-1 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md p-1 rounded-sm shadow-2xl border border-zinc-200 dark:border-zinc-800 min-w-[200px] md:min-w-[240px]">
            <div className="bg-zinc-50 dark:bg-zinc-900 px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 mb-1 hidden md:block">
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50 leading-none">Grid Protocol</span>
+             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50 leading-none">Grid</span>
            </div>
            <LegendItem color="bg-orange-500" label="Fuel Infrastructure" />
            <LegendItem color="bg-blue-600" label="Energy Hubs" />
@@ -602,7 +602,7 @@ const MapComponent: React.FC = () => {
                                <Info size={16} className="text-zinc-400" />
                                <span className="text-[11px] font-black uppercase tracking-widest">{station.type === 'parking' ? 'Storage Node' : 'Detialing Node'}</span>
                              </div>
-                             <p className="text-[9px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-loose">Automated infrastructure tracking. Verification protocol active for real-time status.</p>
+                             <p className="text-[9px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-loose">Automated infrastructure tracking. Verification active for real-time status.</p>
                           </div>
                         )}
 
@@ -640,7 +640,7 @@ const MapComponent: React.FC = () => {
               <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-full h-16">
                 <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-4 rounded-sm border-2 border-zinc-800 dark:border-zinc-200 shadow-xl hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer">
                   <Radio size={20} className="animate-pulse" />
-                  <span className="text-[12px] font-black uppercase tracking-[0.2em] italic">Join Grid Terminal</span>
+                  <span className="text-[12px] font-black uppercase tracking-[0.2em] italic">Join Terminal</span>
                 </div>
               </TelegramLogin>
             </div>
@@ -648,30 +648,30 @@ const MapComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Broadcast Status Modal */}
+      {/* Broadcast Status Modal (Now Update Modal) */}
       {selectedStation && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/60 dark:bg-zinc-950/80 backdrop-blur-md p-4">
           <div className="bg-white dark:bg-zinc-900 p-12 rounded-sm shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)] w-full max-w-[520px] border-2 border-zinc-900 dark:border-zinc-50 relative animate-in slide-in-from-bottom-8 duration-500">
             <div className="absolute top-0 left-0 w-2 h-full bg-zinc-900 dark:bg-zinc-50"></div>
             <div className="flex items-center gap-4 mb-2">
                <Radio size={20} className="text-zinc-900 dark:text-zinc-50 animate-pulse" />
-               <h3 className="font-black text-4xl text-zinc-900 dark:text-zinc-50 tracking-tighter uppercase italic">Broadcast</h3>
+               <h3 className="font-black text-4xl text-zinc-900 dark:text-zinc-50 tracking-tighter uppercase italic">Update</h3>
             </div>
             <p className="text-zinc-400 dark:text-zinc-500 text-[11px] font-black uppercase tracking-[0.3em] mb-12 border-b border-zinc-100 dark:border-zinc-800 pb-6">{selectedStation.name}</p>
             <div className="space-y-8">
-              <FormGroup label="Resource Matrix">
+              <FormGroup label="Resource">
                 <div className="relative">
                   <select id="type-select" className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">
-                    {selectedStation.type === 'fuel' ? <><option value="Benzene">Benzene Matrix</option><option value="Gasoline">Diesel Matrix</option></> : <option value="Electric">Electric Node</option>}
+                    {selectedStation.type === 'fuel' ? <><option value="Benzene">Benzene</option><option value="Gasoline">Diesel</option></> : <option value="Electric">Electric</option>}
                   </select>
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
                 </div>
               </FormGroup>
-              <FormGroup label="Service Status">
+              <FormGroup label="Status">
                 <div className="relative">
                   <select id="status-select" className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">
-                    <option value="Available">Available (Online)</option>
-                    <option value="Out of Stock">Unavailable (Offline)</option>
+                    <option value="Available">Available</option>
+                    <option value="Out of Stock">Unavailable</option>
                   </select>
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
                 </div>
@@ -679,23 +679,23 @@ const MapComponent: React.FC = () => {
               <FormGroup label="Queue Intensity">
                 <div className="relative">
                   <select id="queue-select" className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">
-                    <option value="No Line">Clear Protocol (&lt; 10 Units)</option>
-                    <option value="Short">Short Protocol (10 - 30 Units)</option>
-                    <option value="Medium">Moderate Protocol (30 - 70 Units)</option>
-                    <option value="Long">Extended Protocol (70+ Units)</option>
+                    <option value="No Line">Clear (&lt; 10 Units)</option>
+                    <option value="Short">Short (10 - 30 Units)</option>
+                    <option value="Medium">Moderate (30 - 70 Units)</option>
+                    <option value="Long">Extended (70+ Units)</option>
                   </select>
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
                 </div>
               </FormGroup>
             </div>
             <div className="flex gap-4 mt-14">
-              <button onClick={() => setSelectedStation(null)} className="flex-1 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-50 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-200 dark:border-zinc-700 transition-all shadow-md active:scale-95">Abort Signal</button>
+              <button onClick={() => setSelectedStation(null)} className="flex-1 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-50 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-200 dark:border-zinc-700 transition-all shadow-md active:scale-95">Abort</button>
               <button onClick={() => { 
                 const f = (document.getElementById('type-select') as HTMLSelectElement).value; 
                 const s = (document.getElementById('status-select') as HTMLSelectElement).value; 
                 const q = (document.getElementById('queue-select') as HTMLSelectElement).value; 
                 if (selectedStation) handleReport(selectedStation, f, s, q); 
-              }} className="flex-1 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-800 dark:border-zinc-200 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Commit Signal</button>
+              }} className="flex-1 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-800 dark:border-zinc-200 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Commit</button>
             </div>
           </div>
         </div>
@@ -772,14 +772,14 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, user
       
       <div className="flex justify-between items-center border-b-2 border-zinc-100 dark:border-zinc-800 pb-4 mb-1">
         <span className="text-[9px] font-black uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500 flex items-center gap-2"><MapPin size={10} /> Queue: <span className="text-zinc-900 dark:text-zinc-50">{getQueueLabel(report.latest?.queue || '')}</span></span>
-        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600 opacity-60">{report.stats.total} DATA SIGNALS</span>
+        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600 opacity-60">REPORTS</span>
       </div>
 
       {latest && (
         <div className="flex items-center justify-between gap-4 pt-1">
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
-              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 leading-none mb-2 italic">Signal Origin</span>
+              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 leading-none mb-2 italic">Contributor</span>
               <div className="flex items-center gap-2">
                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50">{latest.user?.firstName || 'Unknown Unit'}</span>
                  <span className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[8px] font-black px-2 py-1 rounded-sm uppercase tracking-widest border border-zinc-800 dark:border-zinc-200 shadow-sm">TRUST: {latest.user?.trustScore || 0}</span>
