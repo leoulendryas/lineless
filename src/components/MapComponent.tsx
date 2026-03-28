@@ -162,6 +162,12 @@ const MapComponent: React.FC = () => {
         { timeout: 10000 }
       );
     }
+
+    // Disable tap handling manually on map instance to avoid TS error on MapContainer
+    if (mapRef) {
+       // @ts-ignore
+       if (mapRef.tap) mapRef.tap.disable();
+    }
   }, [mapRef]);
 
   // Dark Mode detection/persistence
@@ -509,7 +515,6 @@ const MapComponent: React.FC = () => {
           className="h-full w-full grayscale-[0.2]" 
           zoomControl={false}
           ref={setMapRef}
-          tap={false}
         >
           <TileLayer attribution='&copy; CartoDB' url={darkMode ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"} />
           <MapEvents setZoom={setZoomLevel} />
