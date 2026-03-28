@@ -375,7 +375,7 @@ const MapComponent: React.FC = () => {
                 <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
               </div>
             </div>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4">
               <button 
                 onClick={() => setDarkMode(!darkMode)} 
                 className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
@@ -741,7 +741,7 @@ const PriceCard = ({ label, price, activeColor }: { label: string, price: Global
 const AmenityItem = ({ label, available, icon }: { label: string, available: boolean, icon: React.ReactNode }) => (
   <div className={`p-5 border-2 rounded-sm flex flex-col gap-4 transition-all ${available ? 'bg-white dark:bg-zinc-900 border-zinc-900 dark:border-zinc-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px]' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-900 opacity-30 grayscale'}`}>
     <div className="flex justify-between items-center">
-      <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${available ? 'bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 shadow-md' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600'}`}>
+      <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${available ? 'bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600'}`}>
         {icon}
       </div>
       {available && <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse border border-white dark:border-zinc-900 shadow-sm"></div>}
