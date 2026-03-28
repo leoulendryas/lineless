@@ -118,7 +118,7 @@ const MapComponent: React.FC = () => {
   const [showAuthPrompt, setShowAuthPrompt] = useState<boolean>(false);
   const [filter, setFilter] = useState<'all' | 'fuel' | 'charging' | 'parking' | 'car_wash'>('all');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(12);
   const [syncError, setSyncFailed] = useState<string | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
@@ -486,7 +486,8 @@ const MapComponent: React.FC = () => {
                 position={[station.lat, station.lon]} 
                 eventHandlers={{ click: () => {
                    setActivePopupId(station.id);
-                   if (window.innerWidth < 768) setShowSidebar(true);
+                   // Remove auto-opening sidebar on click
+                   // if (window.innerWidth < 768) setShowSidebar(true);
                 }}}
                 icon={L.divIcon({ 
                   className: '', 
@@ -532,12 +533,12 @@ const MapComponent: React.FC = () => {
                         <button 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            if (user) setSelectedStation(station); 
-                            else setShowAuthPrompt(true);
+                            setActivePopupId(station.id);
+                            setShowSidebar(true);
                           }} 
                           className="w-full mt-8 bg-zinc-900 text-white py-4 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 border border-zinc-800 active:scale-[0.98] cursor-pointer"
                         >
-                          Update Status
+                          View Amenities & Updates
                         </button>
                       )}
                     </div>
