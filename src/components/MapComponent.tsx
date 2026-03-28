@@ -366,7 +366,10 @@ const MapComponent: React.FC = () => {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-zinc-900 dark:bg-zinc-50 flex items-center justify-center rounded-sm shadow-xl">
-                  <Fuel size={20} className="text-white dark:text-zinc-900" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4V20H20" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square"/>
+                    <path d="M12 4L12 12" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                  </svg>
                 </div>
                 <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
               </div>
@@ -398,7 +401,7 @@ const MapComponent: React.FC = () => {
                   </div>
                 </TelegramLogin>
               )}
-              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50 active:scale-90 md:hidden">
+              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50 active:scale-90">
                  <X size={20} />
               </button>
             </div>
@@ -491,7 +494,7 @@ const MapComponent: React.FC = () => {
       <div className="relative flex-1 h-full bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500">
         {!showSidebar && (
           <button onClick={() => setShowSidebar(true)} className="absolute top-8 left-8 z-[3000] bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 px-10 py-5 rounded-sm shadow-2xl font-black text-[11px] uppercase tracking-[0.2em] border border-zinc-800 dark:border-white transition-all active:scale-95 hover:translate-y-[-2px] flex items-center gap-3">
-            <Radio size={16} className="animate-pulse" /> Initialize Terminal
+            <Radio size={16} className="animate-pulse" /> Open Terminal
           </button>
         )}
         
