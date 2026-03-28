@@ -365,10 +365,11 @@ const MapComponent: React.FC = () => {
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4V20H20" stroke="#ffffff" strokeWidth="4" strokeLinecap="square"/>
-                    <path d="M12 4L12 12" stroke="#ffffff" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                <div className="w-10 h-10 bg-white flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="24" height="24" fill="white"/>
+                    <path d="M4 4V20H20" stroke="#18181b" strokeWidth="4" strokeLinecap="square"/>
+                    <path d="M12 4L12 12" stroke="#18181b" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
                 <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
@@ -401,7 +402,7 @@ const MapComponent: React.FC = () => {
                   </div>
                 </TelegramLogin>
               )}
-              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50 active:scale-90">
+              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50 active:scale-90">
                  <X size={20} />
               </button>
             </div>
@@ -441,11 +442,11 @@ const MapComponent: React.FC = () => {
                 const s = stations.find(s => s.id === activePopupId)!;
                 return (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-6 bg-zinc-900 dark:bg-zinc-50 rounded-sm border border-zinc-900 dark:border-zinc-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)]">
+                    <div className="p-6 bg-white dark:bg-zinc-900 rounded-sm border-2 border-zinc-900 dark:border-zinc-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-colors">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex flex-col gap-1">
                           <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 flex items-center gap-2"><Radio size={10} className="animate-pulse" /> Active Node</span>
-                          <h3 className="font-black text-white dark:text-zinc-950 tracking-tight text-xl uppercase italic leading-none">{s.name}</h3>
+                          <h3 className="font-black text-zinc-900 dark:text-zinc-50 tracking-tight text-xl uppercase italic leading-none">{s.name}</h3>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 ${s.type === 'fuel' ? 'bg-orange-500' : s.type === 'charging' ? 'bg-blue-600' : s.type === 'parking' ? 'bg-zinc-400' : 'bg-green-500'}`}></div>
                       </div>
@@ -460,7 +461,7 @@ const MapComponent: React.FC = () => {
                               if (user) setSelectedStation(s);
                               else setShowAuthPrompt(true);
                             }} 
-                            className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95 shadow-lg border border-transparent dark:border-zinc-800"
+                            className="flex-1 py-4 px-4 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 shadow-lg border border-transparent dark:border-zinc-800"
                           >
                             Update Status
                           </button>
