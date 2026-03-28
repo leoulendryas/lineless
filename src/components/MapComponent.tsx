@@ -4,7 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import TelegramLogin from './TelegramLogin';
+
+// Helper to calculate distance in meters
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371000; // Radius of Earth in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
 
 interface User {
   id: string;
@@ -119,6 +134,7 @@ const MapComponent: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'fuel' | 'charging' | 'parking' | 'car_wash'>('all');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState(12);
   const [syncError, setSyncFailed] = useState<string | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
@@ -147,6 +163,23 @@ const MapComponent: React.FC = () => {
       );
     }
   }, [mapRef]);
+
+  // Dark Mode detection/persistence
+  useEffect(() => {
+    const isDark = localStorage.getItem('lineless_dark_mode') === 'true' || 
+                   (!('lineless_dark_mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setDarkMode(isDark);
+  }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('lineless_dark_mode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('lineless_dark_mode', 'false');
+    }
+  }, [darkMode]);
 
   const checkUser = async () => {
     try {
@@ -262,6 +295,13 @@ const MapComponent: React.FC = () => {
   };
 
   const handleReport = async (station: Station, fuelType: string, status: string, queue: string) => {
+    // Re-verify geo-fence before submission
+    if (!userLocation) return alert('GPS data required to commit status.');
+    const dist = getDistance(userLocation[0], userLocation[1], station.lat, station.lon);
+    if (dist > 250) { // 250m tolerance for GPS jitter
+       return alert(`PROXIMITY ALERT: You are ${Math.round(dist)}m away. You must be within 200m of the terminal to broadcast status.`);
+    }
+
     const res = await fetch('/api/reports', {
       method: 'POST',
       body: JSON.stringify({ externalId: String(station.id), name: station.name, type: station.type, lat: station.lat, lon: station.lon, fuelType, status, queue })
@@ -320,24 +360,27 @@ const MapComponent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-white text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white relative">
-      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-white border-r border-zinc-200 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
+    <div className={`flex h-full w-full overflow-hidden bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-900 selection:text-white relative`}>
+      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
         <div className="p-6 md:p-10 pb-6 flex flex-col gap-8 md:gap-10 relative">
           <div className="flex justify-between items-center">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-zinc-900 flex items-center justify-center rounded-sm">
+                <div className="w-8 h-8 bg-zinc-900 dark:bg-zinc-50 flex items-center justify-center rounded-sm">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4V20H20" stroke="white" strokeWidth="4" strokeLinecap="square"/>
-                    <path d="M12 4L12 12" stroke="white" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                    <path d="M4 4V20H20" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square"/>
+                    <path d="M12 4L12 12" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
-                <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 italic uppercase">Lineless</h2>
+                <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-900 dark:text-zinc-50 italic uppercase">Lineless</h2>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all">
+                {darkMode ? <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> : <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>}
+              </button>
               {user ? (
                 <div className="flex items-center gap-3 group">
                   <div className="flex flex-col items-end">
@@ -407,10 +450,14 @@ const MapComponent: React.FC = () => {
                         {(s.type === 'fuel' || s.type === 'charging') && (
                           <button 
                             onClick={() => {
+                              if (!userLocation) return alert('GPS data required for broadcast.');
+                              const dist = getDistance(userLocation[0], userLocation[1], s.lat, s.lon);
+                              if (dist > 250) return alert(`PROXIMITY ERROR: You must be within 200m to update (Currently ${Math.round(dist)}m away).`);
+                              
                               if (user) setSelectedStation(s);
                               else setShowAuthPrompt(true);
                             }} 
-                            className="flex-1 py-3 px-4 bg-white text-zinc-900 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all hover:bg-zinc-100 active:scale-95"
+                            className="flex-1 py-3 px-4 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 rounded-sm text-[9px] font-black uppercase tracking-widest transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-95"
                           >
                             Update Status
                           </button>
@@ -464,92 +511,106 @@ const MapComponent: React.FC = () => {
           ref={setMapRef}
           tap={false}
         >
-          <TileLayer attribution='&copy; CartoDB' url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer attribution='&copy; CartoDB' url={darkMode ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"} />
           <MapEvents setZoom={setZoomLevel} />
           <MapRecenter location={userLocation} />
           
           {userLocation && (
-            <Marker position={userLocation} bubblingMouseEvents={false} keyboard={false} icon={L.divIcon({ className: '', html: '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
+            <Marker position={userLocation} bubblingMouseEvents={false} keyboard={false} icon={L.divIcon({ className: '', html: darkMode ? '<div class="w-6 h-6 bg-zinc-50 rounded-full border-4 border-zinc-900 shadow-2xl animate-pulse"></div>' : '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
               <Popup className="better-auth-popup text-center">User Access Point</Popup>
             </Marker>
           )}
 
-          {filteredStations.map(station => {
-            const isFuel = station.type === 'fuel';
-            const isParking = station.type === 'parking';
-            const isCarWash = station.type === 'car_wash';
-            const colorClass = isFuel ? 'bg-orange-500' : isParking ? 'bg-zinc-400' : isCarWash ? 'bg-green-500' : 'bg-blue-600';
-            const isActive = activePopupId === station.id;
-            
-            return (
-              <Marker 
-                key={station.id} 
-                position={[station.lat, station.lon]} 
-                bubblingMouseEvents={false}
-                keyboard={false}
-                eventHandlers={{ click: () => {
-                   setActivePopupId(station.id);
-                   // Remove auto-opening sidebar on click
-                   // if (window.innerWidth < 768) setShowSidebar(true);
-                }}}
-                icon={L.divIcon({ 
-                  className: '', 
-                  html: zoomLevel < 12 
-                    ? `<div class="w-2.5 h-2.5 ${colorClass} rounded-full border border-white shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-900' : ''}"></div>` 
-                    : `<div class="w-7 h-7 ${colorClass} border-2 border-white shadow-xl flex items-center justify-center text-[10px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-900' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
-                  iconSize: [iconSize, iconSize], 
-                  iconAnchor: [iconSize/2, iconSize/2] 
-                })}
-              >
-                {isActive && (
-                  <Popup 
-                    className="better-auth-popup" 
-                    eventHandlers={{ 
-                      remove: () => setActivePopupId(null) 
-                    }}
-                    autoPan={true}
-                  >
-                    <div className="min-w-[280px] md:min-w-[340px] p-2">
-                      <div className="flex justify-between items-center mb-6 border-b border-zinc-100 pb-4">
-                        <h3 className="font-black text-xl tracking-tighter text-zinc-900 uppercase italic leading-none">{station.name}</h3>
-                        <div className={`w-2 h-2 rounded-full ${colorClass}`}></div>
-                      </div>
-                      {station.type === 'fuel' || station.type === 'charging' ? (
-                        <div className="space-y-4">
-                          <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                          <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                          {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
+          <MarkerClusterGroup
+            chunkedLoading
+            showCoverageOnHover={false}
+            maxClusterRadius={40}
+            iconCreateFunction={(cluster: any) => {
+              const count = cluster.getChildCount();
+              return L.divIcon({
+                html: `<div class="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-[10px] font-black w-8 h-8 rounded-sm flex items-center justify-center shadow-2xl border border-white dark:border-zinc-900">${count}</div>`,
+                className: 'custom-cluster-icon',
+                iconSize: [32, 32]
+              });
+            }}
+          >
+            {filteredStations.map(station => {
+              const isFuel = station.type === 'fuel';
+              const isParking = station.type === 'parking';
+              const isCarWash = station.type === 'car_wash';
+              const colorClass = isFuel ? 'bg-orange-500' : isParking ? 'bg-zinc-400' : isCarWash ? 'bg-green-500' : 'bg-blue-600';
+              const isActive = activePopupId === station.id;
+              
+              return (
+                <Marker 
+                  key={station.id} 
+                  position={[station.lat, station.lon]} 
+                  bubblingMouseEvents={false}
+                  keyboard={false}
+                  eventHandlers={{ click: () => {
+                     setActivePopupId(station.id);
+                     // Remove auto-opening sidebar on click
+                     // if (window.innerWidth < 768) setShowSidebar(true);
+                  }}}
+                  icon={L.divIcon({ 
+                    className: '', 
+                    html: zoomLevel < 12 
+                      ? `<div class="w-2.5 h-2.5 ${colorClass} rounded-full border border-white shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}"></div>` 
+                      : `<div class="w-7 h-7 ${colorClass} border-2 border-white shadow-xl flex items-center justify-center text-[10px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
+                    iconSize: [iconSize, iconSize], 
+                    iconAnchor: [iconSize/2, iconSize/2] 
+                  })}
+                >
+                  {isActive && (
+                    <Popup 
+                      className="better-auth-popup" 
+                      eventHandlers={{ 
+                        remove: () => setActivePopupId(null) 
+                      }}
+                      autoPan={true}
+                    >
+                      <div className="min-w-[280px] md:min-w-[340px] p-2 dark:bg-zinc-950">
+                        <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                          <h3 className="font-black text-xl tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase italic leading-none">{station.name}</h3>
+                          <div className={`w-2 h-2 rounded-full ${colorClass}`}></div>
                         </div>
+                        {station.type === 'fuel' || station.type === 'charging' ? (
+                          <div className="space-y-4">
+                            <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                            <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900 dark:text-zinc-50" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                            {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
+                          </div>
 
-                      ) : station.type === 'parking' ? (
-                        <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-sm">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Vehicle Storage Facility</span>
-                           <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-2">Public access parking node. Verification pending for real-time occupancy.</p>
-                        </div>
-                      ) : (
-                        <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-sm">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Vehicle Detailing Hub</span>
-                           <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-2">Professional cleaning and maintenance point.</p>
-                        </div>
-                      )}
-                      {(station.type === 'fuel' || station.type === 'charging') && (
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setActivePopupId(station.id);
-                            setShowSidebar(true);
-                          }} 
-                          className="w-full mt-8 bg-zinc-900 text-white py-4 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 border border-zinc-800 active:scale-[0.98] cursor-pointer"
-                        >
-                          View Amenities & Updates
-                        </button>
-                      )}
-                    </div>
-                  </Popup>
-                )}
-              </Marker>
-            );
-          })}
+                        ) : station.type === 'parking' ? (
+                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50">Vehicle Storage Facility</span>
+                             <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">Public access parking node. Verification pending for real-time occupancy.</p>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50">Vehicle Detailing Hub</span>
+                             <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">Professional cleaning and maintenance point.</p>
+                          </div>
+                        )}
+                        {(station.type === 'fuel' || station.type === 'charging') && (
+                          <button 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setActivePopupId(station.id);
+                              setShowSidebar(true);
+                            }} 
+                            className="w-full mt-8 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 py-4 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 border border-zinc-800 dark:border-zinc-200 active:scale-[0.98] cursor-pointer"
+                          >
+                            View Amenities & Updates
+                          </button>
+                        )}
+                      </div>
+                    </Popup>
+                  )}
+                </Marker>
+              );
+            })}
+          </MarkerClusterGroup>
         </MapContainer>
       </div>
 
@@ -605,9 +666,14 @@ const MapComponent: React.FC = () => {
 
       <style jsx global>{`
         .leaflet-container { font-family: inherit; background: #ffffff; }
+        .dark .leaflet-container { background: #09090b; }
         .leaflet-marker-icon { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
         .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 0px; padding: 20px; border: 1px solid #e4e4e7; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); background: #ffffff; }
+        .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #27272a; color: #f4f4f5; }
         .better-auth-popup .leaflet-popup-tip { display: none; }
+        
+        /* Cluster styles */
+        .custom-cluster-icon { background: none; border: none; }
       `}</style>
     </div>
   );
