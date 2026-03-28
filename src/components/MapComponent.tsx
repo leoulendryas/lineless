@@ -143,11 +143,6 @@ const MapComponent: React.FC = () => {
     fetchAllStations(); 
     checkUser();
 
-    // Close sidebar on mobile by default
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setShowSidebar(false);
-    }
-
     // Auto-locate user on mount
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -222,10 +217,8 @@ const MapComponent: React.FC = () => {
       const query = `[out:json][timeout:60];(nwr["amenity"~"fuel|charging_station|parking|car_wash"](8.80,38.50,9.20,39.10);nwr["brand"~"Total|NOC|OLA|Yetebaberut|Gomeju|Kobil|TAF|Dalol|Global|Nile|Hambissa|Wodaj|Tulu|OiLibya|Horizon"](8.80,38.50,9.20,39.10););out center;`;
       const osmResponse = await fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
       if (!osmResponse.ok) throw new Error(`Link Error: ${osmResponse.status}`);
-      const contentType = osmResponse.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) throw new Error('Invalid format');
-      
       const osmData = await osmResponse.json();
+      
       const dbResponse = await fetch('/api/reports');
       const { stations: dbStations, prices } = await dbResponse.json();
       setGlobalPrices(prices);
@@ -301,11 +294,10 @@ const MapComponent: React.FC = () => {
   };
 
   const handleReport = async (station: Station, fuelType: string, status: string, queue: string) => {
-    // Re-verify geo-fence before submission
     if (!userLocation) return alert('GPS data required to commit status.');
     const dist = getDistance(userLocation[0], userLocation[1], station.lat, station.lon);
-    if (dist > 250) { // 250m tolerance for GPS jitter
-       return alert(`PROXIMITY ALERT: You are ${Math.round(dist)}m away. You must be within 200m of the terminal to broadcast status.`);
+    if (dist > 250) {
+       return alert(`PROXIMITY ALERT: You are ${Math.round(dist)}m away. You must be within 200m to broadcast.`);
     }
 
     const res = await fetch('/api/reports', {
@@ -342,15 +334,15 @@ const MapComponent: React.FC = () => {
   const filteredStations = stations.filter(s => filter === 'all' || s.type === filter);
 
   if (loading) return (
-    <div className="h-full w-full flex items-center justify-center bg-white">
+    <div className="h-full w-full flex items-center justify-center bg-white dark:bg-zinc-950">
       <div className="flex flex-col items-center gap-6">
         <div className="grid grid-cols-2 gap-1 animate-pulse">
-          <div className="w-4 h-4 bg-zinc-900"></div>
-          <div className="w-4 h-4 bg-zinc-200"></div>
-          <div className="w-4 h-4 bg-zinc-200"></div>
-          <div className="w-4 h-4 bg-zinc-900"></div>
+          <div className="w-4 h-4 bg-zinc-900 dark:bg-zinc-50"></div>
+          <div className="w-4 h-4 bg-zinc-200 dark:bg-zinc-800"></div>
+          <div className="w-4 h-4 bg-zinc-200 dark:bg-zinc-800"></div>
+          <div className="w-4 h-4 bg-zinc-900 dark:bg-zinc-50"></div>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-900">Establishing Lineless Link</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-900 dark:text-zinc-50">Establishing Lineless Link</span>
       </div>
     </div>
   );
@@ -366,9 +358,9 @@ const MapComponent: React.FC = () => {
   };
 
   return (
-    <div className={`flex h-full w-full overflow-hidden bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-900 selection:text-white relative`}>
+    <div className={`flex h-full w-full overflow-hidden bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-900 selection:text-white transition-colors duration-500 relative`}>
       <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
         <div className="p-6 md:p-10 pb-6 flex flex-col gap-8 md:gap-10 relative">
           <div className="flex justify-between items-center">
@@ -384,24 +376,28 @@ const MapComponent: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all">
+              <button 
+                onClick={() => setDarkMode(!darkMode)} 
+                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-50 transition-all"
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
                 {darkMode ? <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> : <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>}
               </button>
               {user ? (
                 <div className="flex items-center gap-3 group">
                   <div className="flex flex-col items-end">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-900 leading-none">{user.firstName}</span>
-                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 leading-none mt-1">Trust: {user.trustScore}</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 leading-none">{user.firstName}</span>
+                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 leading-none mt-1">Trust: {user.trustScore}</span>
                   </div>
                   {user.photoUrl ? (
-                    <img src={user.photoUrl} alt="Avatar" className="w-8 h-8 rounded-sm border border-zinc-200 grayscale hover:grayscale-0 transition-all cursor-pointer" onClick={handleLogout} title="Logout" />
+                    <img src={user.photoUrl} alt="Avatar" className="w-8 h-8 rounded-sm border border-zinc-200 dark:border-zinc-800 grayscale hover:grayscale-0 transition-all cursor-pointer" onClick={handleLogout} title="Logout" />
                   ) : (
-                    <div className="w-8 h-8 bg-zinc-100 flex items-center justify-center rounded-sm border border-zinc-200 text-[10px] font-black cursor-pointer" onClick={handleLogout}>{user.firstName?.[0]}</div>
+                    <div className="w-8 h-8 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center rounded-sm border border-zinc-200 dark:border-zinc-800 text-[10px] font-black cursor-pointer text-zinc-900 dark:text-zinc-50" onClick={handleLogout}>{user.firstName?.[0]}</div>
                   )}
                 </div>
               ) : (
                 <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-[120px] h-[36px]">
-                  <div className="w-full h-full bg-zinc-900 text-white flex items-center justify-center gap-2 rounded-sm border border-zinc-800 shadow-sm hover:bg-zinc-800 transition-all cursor-pointer">
+                  <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-2 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-sm hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M21 5L2 12.5L9 13.5M21 5L18.5 20L9 13.5M21 5L9 13.5M9 13.5V19L12 15.5" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"/>
                     </svg>
@@ -409,27 +405,27 @@ const MapComponent: React.FC = () => {
                   </div>
                 </TelegramLogin>
               )}
-              <button onClick={() => setShowSidebar(false)} className="p-2 hover:bg-zinc-50 border border-transparent hover:border-zinc-200 rounded-sm transition-all text-zinc-900">
+              <button onClick={() => setShowSidebar(false)} className="p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50">
                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             </div>
           </div>
           
           <div className="flex gap-2">
-             <button onClick={locateUser} className="flex-1 py-3 px-4 bg-white hover:bg-zinc-50 text-zinc-900 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 shadow-sm active:scale-95">Locate Me</button>
-             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-3 px-4 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800 shadow-sm active:scale-95">Refresh Grid</button>
+             <button onClick={locateUser} className="flex-1 py-3 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95">Locate Me</button>
+             <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-3 px-4 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800 dark:border-zinc-200 shadow-sm active:scale-95">Refresh Grid</button>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
              <PriceCard label="Benzene" price={globalPrices?.Benzene} activeColor="bg-orange-500" />
-             <PriceCard label="Diesel" price={globalPrices?.Gasoline} activeColor="bg-zinc-900" />
+             <PriceCard label="Diesel" price={globalPrices?.Gasoline} activeColor="bg-zinc-900 dark:bg-zinc-50" />
              <PriceCard label="EV" price={globalPrices?.Electric} activeColor="bg-blue-600" />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 space-y-8 no-scrollbar relative">
-          <div className="sticky top-0 bg-white/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-100">
-             <select value={filter} onChange={(e) => setFilter(e.target.value as 'all' | 'fuel' | 'charging' | 'parking' | 'car_wash')} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-900 transition-all appearance-none cursor-pointer">
+          <div className="sticky top-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-100 dark:border-zinc-800">
+             <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="w-full p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-900 dark:text-zinc-50">
                 <option value="all">Lineless Pool: {stations.length}</option>
                 <option value="fuel">Fuel Infrastructure</option>
                 <option value="charging">Energy Nodes</option>
@@ -443,12 +439,12 @@ const MapComponent: React.FC = () => {
               (() => {
                 const s = stations.find(s => s.id === activePopupId)!;
                 return (
-                  <div className="space-y-6">
-                    <div className="p-6 bg-zinc-900 rounded-sm border border-zinc-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="p-6 bg-zinc-900 dark:bg-zinc-50 rounded-sm border border-zinc-900 dark:border-zinc-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">Terminal Selected</span>
-                          <h3 className="font-black text-white tracking-tight text-lg uppercase italic leading-none">{s.name}</h3>
+                          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">Terminal Selected</span>
+                          <h3 className="font-black text-white dark:text-zinc-950 tracking-tight text-lg uppercase italic leading-none">{s.name}</h3>
                         </div>
                         <div className={`w-3 h-3 rounded-full ${s.type === 'fuel' ? 'bg-orange-500' : s.type === 'charging' ? 'bg-blue-600' : s.type === 'parking' ? 'bg-zinc-400' : 'bg-green-500'}`}></div>
                       </div>
@@ -482,26 +478,26 @@ const MapComponent: React.FC = () => {
                 );
               })()
             ) : (
-              <div className="p-12 border border-dashed border-zinc-200 rounded-sm flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-zinc-50 flex items-center justify-center rounded-full mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-300"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <div className="p-12 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-sm flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center rounded-full mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-300 dark:text-zinc-700"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Select a terminal on the map to view amenities</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Select a terminal on the map to view amenities</p>
               </div>
             )}
           </div>
         </div>
       </aside>
 
-      <div className="relative flex-1 h-full bg-zinc-50">
+      <div className="relative flex-1 h-full bg-zinc-50 dark:bg-zinc-900">
         {!showSidebar && (
-          <button onClick={() => setShowSidebar(true)} className="absolute top-8 left-8 z-[3000] bg-zinc-900 text-white px-8 py-4 rounded-sm shadow-2xl font-black text-[10px] uppercase tracking-widest border border-zinc-800 transition-all active:scale-95">Open Terminal</button>
+          <button onClick={() => setShowSidebar(true)} className="absolute top-8 left-8 z-[3000] bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 px-8 py-4 rounded-sm shadow-2xl font-black text-[10px] uppercase tracking-widest border border-zinc-800 dark:border-zinc-200 transition-all active:scale-95">Open Terminal</button>
         )}
         
-        {/* Floating Legend - High Contrast Grid Color Key */}
-        <div className="absolute bottom-8 right-8 z-[3000] flex flex-col gap-1 bg-white p-1 rounded-sm shadow-2xl border border-zinc-200 min-w-[180px] md:min-w-[220px]">
-           <div className="bg-zinc-50 px-4 py-3 border-b border-zinc-100 mb-1 hidden md:block">
-             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 leading-none">Grid Color Key</span>
+        {/* Floating Legend */}
+        <div className="absolute bottom-8 right-8 z-[3000] flex flex-col gap-1 bg-white dark:bg-zinc-950 p-1 rounded-sm shadow-2xl border border-zinc-200 dark:border-zinc-800 min-w-[180px] md:min-w-[220px]">
+           <div className="bg-zinc-50 dark:bg-zinc-900 px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 mb-1 hidden md:block">
+             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50 leading-none">Grid Color Key</span>
            </div>
            <LegendItem color="bg-orange-500" label="Benzene / Diesel" />
            <LegendItem color="bg-blue-600" label="Energy / EV Hubs" />
@@ -521,7 +517,7 @@ const MapComponent: React.FC = () => {
           <MapRecenter location={userLocation} />
           
           {userLocation && (
-            <Marker position={userLocation} bubblingMouseEvents={false} keyboard={false} icon={L.divIcon({ className: '', html: darkMode ? '<div class="w-6 h-6 bg-zinc-50 rounded-full border-4 border-zinc-900 shadow-2xl animate-pulse"></div>' : '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
+            <Marker position={userLocation} bubblingMouseEvents={false} keyboard={false} icon={L.divIcon({ className: '', html: darkMode ? '<div class="w-6 h-6 bg-zinc-50 rounded-full border-4 border-zinc-950 shadow-2xl animate-pulse"></div>' : '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
               <Popup className="better-auth-popup text-center">User Access Point</Popup>
             </Marker>
           )}
@@ -554,14 +550,12 @@ const MapComponent: React.FC = () => {
                   keyboard={false}
                   eventHandlers={{ click: () => {
                      setActivePopupId(station.id);
-                     // Remove auto-opening sidebar on click
-                     // if (window.innerWidth < 768) setShowSidebar(true);
                   }}}
                   icon={L.divIcon({ 
                     className: '', 
                     html: zoomLevel < 12 
-                      ? `<div class="w-2.5 h-2.5 ${colorClass} rounded-full border border-white shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}"></div>` 
-                      : `<div class="w-7 h-7 ${colorClass} border-2 border-white shadow-xl flex items-center justify-center text-[10px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
+                      ? `<div class="w-2.5 h-2.5 ${colorClass} rounded-full border border-white dark:border-zinc-900 shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}"></div>` 
+                      : `<div class="w-7 h-7 ${colorClass} border-2 border-white dark:border-zinc-900 shadow-xl flex items-center justify-center text-[10px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-900 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
                     iconSize: [iconSize, iconSize], 
                     iconAnchor: [iconSize/2, iconSize/2] 
                   })}
@@ -574,7 +568,7 @@ const MapComponent: React.FC = () => {
                       }}
                       autoPan={true}
                     >
-                      <div className="min-w-[280px] md:min-w-[340px] p-2 dark:bg-zinc-950">
+                      <div className="min-w-[280px] md:min-w-[340px] p-2">
                         <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-4">
                           <h3 className="font-black text-xl tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase italic leading-none">{station.name}</h3>
                           <div className={`w-2 h-2 rounded-full ${colorClass}`}></div>
@@ -587,13 +581,13 @@ const MapComponent: React.FC = () => {
                           </div>
 
                         ) : station.type === 'parking' ? (
-                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50">Vehicle Storage Facility</span>
+                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm text-zinc-900 dark:text-zinc-50">
+                             <span className="text-[10px] font-black uppercase tracking-widest">Vehicle Storage Facility</span>
                              <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">Public access parking node. Verification pending for real-time occupancy.</p>
                           </div>
                         ) : (
-                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50">Vehicle Detailing Hub</span>
+                          <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm text-zinc-900 dark:text-zinc-50">
+                             <span className="text-[10px] font-black uppercase tracking-widest">Vehicle Detailing Hub</span>
                              <p className="text-[8px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">Professional cleaning and maintenance point.</p>
                           </div>
                         )}
@@ -620,20 +614,20 @@ const MapComponent: React.FC = () => {
       </div>
 
       {showAuthPrompt && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white p-12 rounded-sm shadow-2xl w-full max-w-[420px] border border-zinc-200 relative text-center">
-            <button onClick={() => setShowAuthPrompt(false)} className="absolute top-4 right-4 p-2 hover:bg-zinc-50 rounded-sm transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-            <div className="w-16 h-16 bg-zinc-900 mx-auto mb-8 flex items-center justify-center rounded-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/40 dark:bg-zinc-950/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-zinc-900 p-12 rounded-sm shadow-2xl w-full max-w-[420px] border border-zinc-200 dark:border-zinc-800 relative text-center">
+            <button onClick={() => setShowAuthPrompt(false)} className="absolute top-4 right-4 p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            <div className="w-16 h-16 bg-zinc-900 dark:bg-zinc-50 mx-auto mb-8 flex items-center justify-center rounded-sm">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 4V20H20" stroke="white" strokeWidth="4" strokeLinecap="square"/>
-                <path d="M12 4L12 12" stroke="white" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
+                <path d="M4 4V20H20" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square"/>
+                <path d="M12 4L12 12" stroke={darkMode ? "black" : "white"} strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
               </svg>
             </div>
-            <h3 className="font-black text-2xl text-zinc-900 tracking-tighter mb-4 uppercase italic">Verification Required</h3>
-            <p className="text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em] mb-10 leading-relaxed">Please authenticate via Telegram to contribute to the grid status.</p>
+            <h3 className="font-black text-2xl text-zinc-900 dark:text-zinc-50 tracking-tighter mb-4 uppercase italic">Verification Required</h3>
+            <p className="text-zinc-400 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-10 leading-relaxed">Please authenticate via Telegram to contribute to the grid status.</p>
             <div className="flex justify-center">
               <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-full h-14">
-                <div className="w-full h-full bg-zinc-900 text-white flex items-center justify-center gap-3 rounded-sm border border-zinc-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer">
+                <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-3 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M21 5L2 12.5L9 13.5M21 5L18.5 20L9 13.5M21 5L9 13.5M9 13.5V19L12 15.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter"/>
                   </svg>
@@ -646,24 +640,24 @@ const MapComponent: React.FC = () => {
       )}
 
       {selectedStation && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white p-12 rounded-sm shadow-2xl w-full max-w-[480px] border border-zinc-200 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-zinc-900"></div>
-            <h3 className="font-black text-3xl text-zinc-900 tracking-tighter mb-2 uppercase italic">Broadcast</h3>
-            <p className="text-zinc-400 text-[10px] font-black uppercase tracking-[0.2em] mb-10">{selectedStation.name}</p>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/40 dark:bg-zinc-950/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-zinc-900 p-12 rounded-sm shadow-2xl w-full max-w-[480px] border border-zinc-200 dark:border-zinc-800 relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-zinc-900 dark:bg-zinc-50"></div>
+            <h3 className="font-black text-3xl text-zinc-900 dark:text-zinc-50 tracking-tighter mb-2 uppercase italic text-zinc-900 dark:text-zinc-50">Broadcast</h3>
+            <p className="text-zinc-400 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-10">{selectedStation.name}</p>
             <div className="space-y-6">
-              <FormGroup label="Resource"><select id="type-select" className="w-full h-12 px-4 bg-zinc-50 border border-zinc-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 transition-all">{selectedStation.type === 'fuel' ? <><option value="Benzene">Benzene</option><option value="Gasoline">Diesel</option></> : <option value="Electric">Electric</option>}</select></FormGroup>
-              <FormGroup label="Status"><select id="status-select" className="w-full h-12 px-4 bg-zinc-50 border border-zinc-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 transition-all"><option value="Available">Available</option><option value="Out of Stock">Unavailable</option></select></FormGroup>
-              <FormGroup label="Queue Depth"><select id="queue-select" className="w-full h-12 px-4 bg-zinc-50 border border-zinc-200 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 transition-all"><option value="No Line">Clear (&lt; 10 Cars)</option><option value="Short">Short (10 - 30 Cars)</option><option value="Medium">Moderate (30 - 70 Cars)</option><option value="Long">Extended (70+ Cars)</option></select></FormGroup>
+              <FormGroup label="Resource"><select id="type-select" className="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">{selectedStation.type === 'fuel' ? <><option value="Benzene">Benzene</option><option value="Gasoline">Diesel</option></> : <option value="Electric">Electric</option>}</select></FormGroup>
+              <FormGroup label="Status"><select id="status-select" className="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"><option value="Available">Available</option><option value="Out of Stock">Unavailable</option></select></FormGroup>
+              <FormGroup label="Queue Depth"><select id="queue-select" className="w-full h-12 px-4 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"><option value="No Line">Clear (&lt; 10 Cars)</option><option value="Short">Short (10 - 30 Cars)</option><option value="Medium">Moderate (30 - 70 Cars)</option><option value="Long">Extended (70+ Cars)</option></select></FormGroup>
             </div>
             <div className="flex gap-2 mt-10">
-              <button onClick={() => setSelectedStation(null)} className="flex-1 bg-zinc-50 hover:bg-zinc-100 text-zinc-900 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest border border-zinc-200 transition-all">Abort</button>
+              <button onClick={() => setSelectedStation(null)} className="flex-1 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-50 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 transition-all">Abort</button>
               <button onClick={() => { 
                 const f = (document.getElementById('type-select') as HTMLSelectElement).value; 
                 const s = (document.getElementById('status-select') as HTMLSelectElement).value; 
                 const q = (document.getElementById('queue-select') as HTMLSelectElement).value; 
                 if (selectedStation) handleReport(selectedStation, f, s, q); 
-              }} className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white py-4 rounded-sm font-black text-[10px] uppercase tracking-widest border border-zinc-800 transition-all shadow-xl active:scale-[0.98]">Commit</button>
+              }} className="flex-1 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 py-4 rounded-sm font-black text-[10px] uppercase tracking-widest border border-zinc-800 dark:border-zinc-200 transition-all shadow-xl active:scale-[0.98]">Commit</button>
             </div>
           </div>
         </div>
@@ -673,8 +667,9 @@ const MapComponent: React.FC = () => {
         .leaflet-container { font-family: inherit; background: #ffffff; }
         .dark .leaflet-container { background: #09090b; }
         .leaflet-marker-icon { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
-        .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 0px; padding: 20px; border: 1px solid #e4e4e7; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); background: #ffffff; }
-        .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #27272a; color: #f4f4f5; }
+        
+        .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 0px; padding: 12px; border: 1px solid #e4e4e7; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); background: #ffffff; color: #09090b; }
+        .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #27272a; color: #fafafa; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
         .better-auth-popup .leaflet-popup-tip { display: none; }
         
         /* Cluster styles */
@@ -685,32 +680,29 @@ const MapComponent: React.FC = () => {
 };
 
 const PriceCard = ({ label, price, activeColor }: { label: string, price: GlobalPrice | undefined, activeColor: string }) => (
-  <div className="p-4 rounded-sm border border-zinc-200 bg-zinc-50 transition-all hover:border-zinc-900 group">
+  <div className="p-4 rounded-sm border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 transition-all hover:border-zinc-900 dark:hover:border-zinc-50 group">
     <div className="flex items-center justify-between mb-2">
-      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 group-hover:text-zinc-900">{label}</span>
+      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">{label}</span>
       <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${activeColor}`}></span>
     </div>
     <div className="flex flex-col">
-      <span className="text-sm font-black tracking-tighter text-zinc-900">{price ? price.price.toFixed(2) : '--'}</span>
-      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-widest leading-none">ETB/UNIT</span>
+      <span className="text-sm font-black tracking-tighter text-zinc-900 dark:text-zinc-50">{price ? price.price.toFixed(2) : '--'}</span>
+      <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-none">ETB/UNIT</span>
     </div>
   </div>
 );
 
-const AmenityBadge = ({ type }: { type: string }) => (
-  <span className="bg-zinc-900 text-white text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest border border-zinc-800">{type}</span>
-);
-
-const StationMiniFeed = ({ label, report, activeColor }: { label: string, report: FuelStatus & { price: GlobalPrice | null }, activeColor: string }) => {
-  if (report.stats.total === 0) return null;
-  const isAvailable = report.latest?.status === 'Available';
-  return (
-    <div className="flex items-center justify-between bg-zinc-50 p-2 rounded-sm border border-zinc-100 group-hover:bg-zinc-100 transition-colors">
-      <span className={`text-[8px] font-black uppercase tracking-widest ${isAvailable ? activeColor : 'text-zinc-400'}`}>{label}</span>
-      <span className={`text-[8px] font-black uppercase tracking-widest ${isAvailable ? 'text-zinc-900' : 'text-zinc-300'}`}>{report.latest?.status}</span>
+const AmenityItem = ({ label, available, icon }: { label: string, available: boolean, icon: React.ReactNode }) => (
+  <div className={`p-4 border rounded-sm flex flex-col gap-3 transition-all ${available ? 'bg-white dark:bg-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)]' : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-100 dark:border-zinc-900 opacity-40'}`}>
+    <div className="flex justify-between items-center">
+      <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${available ? 'bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600'}`}>
+        {icon}
+      </div>
+      {available && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>}
     </div>
-  );
-};
+    <span className="text-[9px] font-black uppercase tracking-widest leading-none text-zinc-900 dark:text-zinc-50">{label}</span>
+  </div>
+);
 
 const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, userId }: { 
   label: string, 
@@ -724,28 +716,28 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, user
   const latest = report.latest;
   
   return (
-    <div className="bg-zinc-50 p-5 rounded-sm border border-zinc-100 flex flex-col gap-4">
+    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-5 rounded-sm border border-zinc-100 dark:border-zinc-800 flex flex-col gap-4 group hover:border-zinc-300 dark:hover:border-zinc-700 transition-all">
       <div className="flex justify-between items-center">
         <div className="flex flex-col">
-          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-1">{label}</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 leading-none mb-1">{label}</span>
           <span className={`text-sm font-black tracking-tighter ${colorClass}`}>{report.price ? `${report.price.price} ${report.price.unit}` : 'N/A'}</span>
         </div>
-        <div className={`px-3 py-1.5 rounded-sm text-[8px] font-black uppercase tracking-widest border ${isAvailable ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-300 border-zinc-200'}`}>{report.latest?.status || 'N/A'}</div>
+        <div className={`px-3 py-1.5 rounded-sm text-[8px] font-black uppercase tracking-widest border ${isAvailable ? 'bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-50' : 'bg-white dark:bg-zinc-800 text-zinc-300 dark:text-zinc-700 border-zinc-200 dark:border-zinc-700'}`}>{report.latest?.status || 'N/A'}</div>
       </div>
       
-      <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-1">
-        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Queue: <span className="text-zinc-900">{getQueueLabel(report.latest?.queue || '')}</span></span>
-        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 opacity-40 uppercase">{report.stats.total} REPORTS</span>
+      <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3 mb-1">
+        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Queue: <span className="text-zinc-900 dark:text-zinc-50">{getQueueLabel(report.latest?.queue || '')}</span></span>
+        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-600 opacity-40 uppercase">{report.stats.total} REPORTS</span>
       </div>
 
       {latest && (
         <div className="flex items-center justify-between gap-4 pt-1">
           <div className="flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 leading-none mb-1">Contributor</span>
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 leading-none mb-1">Contributor</span>
               <div className="flex items-center gap-1.5">
-                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-900 italic">{latest.user?.firstName || 'Anonymous'}</span>
-                 <span className="bg-zinc-900 text-white text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest border border-zinc-800">TRUST: {latest.user?.trustScore || 0}</span>
+                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 italic">{latest.user?.firstName || 'Anonymous'}</span>
+                 <span className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 text-[7px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-widest border border-zinc-800 dark:border-zinc-200">TRUST: {latest.user?.trustScore || 0}</span>
               </div>
             </div>
           </div>
@@ -754,20 +746,18 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, user
             <button 
               onClick={(e) => { e.stopPropagation(); onVote(latest.id, 'upvote'); }}
               disabled={latest.userId === userId}
-              title={latest.userId === userId ? "Cannot vote on your own report" : "Upvote reliability"}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white border-zinc-200 hover:border-zinc-900 active:scale-95'}`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-zinc-100 active:scale-95'}`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900"><path d="m18 15-6-6-6 6"/></svg>
-              <span className="text-[9px] font-black text-zinc-900">{latest.upvotes}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900 dark:text-zinc-50"><path d="m18 15-6-6-6 6"/></svg>
+              <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-50">{latest.upvotes}</span>
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onVote(latest.id, 'downvote'); }}
               disabled={latest.userId === userId}
-              title={latest.userId === userId ? "Cannot vote on your own report" : "Report inaccuracy"}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white border-zinc-200 hover:border-zinc-900 active:scale-95'}`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-sm border transition-all ${latest.userId === userId ? 'opacity-30 grayscale cursor-not-allowed' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-900 dark:hover:border-zinc-100 active:scale-95'}`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900"><path d="m6 9 6 6 6-6"/></svg>
-              <span className="text-[9px] font-black text-zinc-900">{latest.downvotes}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-900 dark:text-zinc-50"><path d="m6 9 6 6 6-6"/></svg>
+              <span className="text-[9px] font-black text-zinc-900 dark:text-zinc-50">{latest.downvotes}</span>
             </button>
           </div>
         </div>
@@ -777,21 +767,9 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, user
 };
 
 const LegendItem = ({ color, label }: { color: string, label: string }) => (
-  <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 rounded-sm transition-colors cursor-default">
+  <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-sm transition-colors cursor-default">
     <span className={`w-2.5 h-2.5 ${color} rounded-sm shadow-sm`}></span>
-    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900">{label}</span>
-  </div>
-);
-
-const AmenityItem = ({ label, available, icon }: { label: string, available: boolean, icon: React.ReactNode }) => (
-  <div className={`p-4 border rounded-sm flex flex-col gap-3 transition-all ${available ? 'bg-white border-zinc-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-zinc-50 border-zinc-100 opacity-40'}`}>
-    <div className="flex justify-between items-center">
-      <div className={`w-8 h-8 flex items-center justify-center rounded-sm ${available ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-400'}`}>
-        {icon}
-      </div>
-      {available && <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>}
-    </div>
-    <span className="text-[9px] font-black uppercase tracking-widest leading-none">{label}</span>
+    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50">{label}</span>
   </div>
 );
 
@@ -802,7 +780,7 @@ const ToiletIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" heig
 const ATMIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7 12 2"/></svg>;
 
 const FormGroup = ({ label, children }: { label: string, children: React.ReactNode }) => (
-  <div className="flex flex-col gap-2"><label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 leading-none ml-1">{label}</label>{children}</div>
+  <div className="flex flex-col gap-2"><label className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 dark:text-zinc-600 leading-none ml-1">{label}</label>{children}</div>
 );
 
 const MapEvents = ({ setZoom }: { setZoom: (z: number) => void }) => {
