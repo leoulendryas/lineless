@@ -469,7 +469,7 @@ const MapComponent: React.FC = () => {
           <MapRecenter location={userLocation} />
           
           {userLocation && (
-            <Marker position={userLocation} bubblingMouseEvents={false} icon={L.divIcon({ className: '', html: '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
+            <Marker position={userLocation} bubblingMouseEvents={false} keyboard={false} icon={L.divIcon({ className: '', html: '<div class="w-6 h-6 bg-zinc-900 rounded-full border-4 border-white shadow-2xl animate-pulse"></div>', iconSize: [24, 24] })}>
               <Popup className="better-auth-popup text-center">User Access Point</Popup>
             </Marker>
           )}
@@ -486,6 +486,7 @@ const MapComponent: React.FC = () => {
                 key={station.id} 
                 position={[station.lat, station.lon]} 
                 bubblingMouseEvents={false}
+                keyboard={false}
                 eventHandlers={{ click: () => {
                    setActivePopupId(station.id);
                    // Remove auto-opening sidebar on click
@@ -604,6 +605,7 @@ const MapComponent: React.FC = () => {
 
       <style jsx global>{`
         .leaflet-container { font-family: inherit; background: #ffffff; }
+        .leaflet-marker-icon { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
         .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 0px; padding: 20px; border: 1px solid #e4e4e7; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); background: #ffffff; }
         .better-auth-popup .leaflet-popup-tip { display: none; }
       `}</style>
