@@ -296,8 +296,8 @@ const MapComponent: React.FC = () => {
   const handleReport = async (station: Station, fuelType: string, status: string, queue: string) => {
     if (!userLocation) return alert('GPS data required to commit status.');
     const dist = getDistance(userLocation[0], userLocation[1], station.lat, station.lon);
-    if (dist > 300) {
-       return alert(`PROXIMITY ALERT: You are ${Math.round(dist)}m away. Move closer to the terminal to broadcast.`);
+    if (dist > 2000) {
+       return alert(`PROXIMITY ALERT: You are ${Math.round(dist)}m away. Move closer to the terminal to broadcast (within 2km).`);
     }
 
     const res = await fetch('/api/reports', {
@@ -458,7 +458,7 @@ const MapComponent: React.FC = () => {
                             onClick={() => {
                               if (!userLocation) return alert('GPS data required.');
                               const dist = getDistance(userLocation[0], userLocation[1], s.lat, s.lon);
-                              if (dist > 300) return alert(`PROXIMITY ERROR: Must be within 200m (Currently ${Math.round(dist)}m).`);
+                              if (dist > 2000) return alert(`PROXIMITY ERROR: Must be within 2km (Currently ${Math.round(dist)}m).`);
                               
                               if (user) setSelectedStation(s);
                               else setShowAuthPrompt(true);
