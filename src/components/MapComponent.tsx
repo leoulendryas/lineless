@@ -363,7 +363,7 @@ const MapComponent: React.FC = () => {
         
         <div className="p-4 md:p-10 pb-6 flex flex-col gap-6 md:gap-10 relative">
           <div className="flex justify-between items-center gap-2">
-            <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shrink-0">
                   <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -372,7 +372,7 @@ const MapComponent: React.FC = () => {
                     <path d="M12 4L12 12" className="stroke-zinc-900 dark:stroke-zinc-50" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
-                <h2 className="font-black text-xl md:text-2xl tracking-tighter leading-none text-zinc-950 dark:text-zinc-50 italic uppercase truncate hidden sm:block">Lineless</h2>
+                <h2 className="font-black text-xl md:text-2xl tracking-tighter leading-none text-zinc-950 dark:text-zinc-50 italic uppercase whitespace-nowrap">Lineless</h2>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-4 shrink-0">
