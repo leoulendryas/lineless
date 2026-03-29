@@ -361,51 +361,51 @@ const MapComponent: React.FC = () => {
       <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
-        <div className="p-6 md:p-10 pb-6 flex flex-col gap-8 md:gap-10 relative">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div className="p-4 md:p-10 pb-6 flex flex-col gap-6 md:gap-10 relative">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex flex-col gap-2 min-w-0">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-sm shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shrink-0">
+                  <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect width="24" height="24" className="fill-white dark:fill-zinc-900"/>
                     <path d="M4 4V20H20" className="stroke-zinc-900 dark:stroke-zinc-50" strokeWidth="4" strokeLinecap="square"/>
                     <path d="M12 4L12 12" className="stroke-zinc-900 dark:stroke-zinc-50" strokeWidth="4" strokeLinecap="square" opacity="0.3"/>
                   </svg>
                 </div>
-                <h2 className="font-black text-2xl tracking-tighter leading-none text-zinc-950 dark:text-zinc-50 italic uppercase">Lineless</h2>
+                <h2 className="font-black text-xl md:text-2xl tracking-tighter leading-none text-zinc-950 dark:text-zinc-50 italic uppercase truncate hidden sm:block">Lineless</h2>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
               <button 
                 onClick={() => setDarkMode(!darkMode)} 
-                className="p-3 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
+                className="p-2 md:p-3 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 transition-all shadow-sm active:scale-90"
               >
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                {darkMode ? <Sun className="w-4 h-4 md:w-[18px] md:h-[18px]" /> : <Moon className="w-4 h-4 md:w-[18px] md:h-[18px]" />}
               </button>
               {user ? (
-                <div className="flex items-center gap-3 group">
-                  <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2 md:gap-3 group">
+                  <div className="flex flex-col items-end hidden sm:flex">
                     <span className="text-[8px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-50 leading-none">{user.firstName}</span>
                     <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 leading-none mt-1">Trust Score: {user.trustScore}</span>
                   </div>
                   {user.photoUrl ? (
-                    <img src={user.photoUrl} alt="Avatar" className="w-10 h-10 rounded-sm border border-zinc-200 dark:border-zinc-800 grayscale hover:grayscale-0 transition-all cursor-pointer shadow-md" onClick={handleLogout} />
+                    <img src={user.photoUrl} alt="Avatar" className="w-8 h-8 md:w-10 md:h-10 rounded-sm border border-zinc-200 dark:border-zinc-800 grayscale hover:grayscale-0 transition-all cursor-pointer shadow-md" onClick={handleLogout} />
                   ) : (
-                    <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center rounded-sm border border-zinc-200 dark:border-zinc-800 text-[12px] font-black cursor-pointer text-zinc-950 dark:text-zinc-50 shadow-md" onClick={handleLogout}>{user.firstName?.[0]}</div>
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center rounded-sm border border-zinc-200 dark:border-zinc-800 text-[10px] md:text-[12px] font-black cursor-pointer text-zinc-950 dark:text-zinc-50 shadow-md" onClick={handleLogout}>{user.firstName?.[0]}</div>
                   )}
                 </div>
               ) : (
-                <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-[120px] h-[40px]">
-                  <div className="w-full h-full bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-2 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <TelegramLogin botName="lineless_help_bot" onAuth={handleTelegramAuth} className="w-[100px] md:w-[120px] h-[36px] md:h-[40px]">
+                  <div className="w-full h-full bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-1 md:gap-2 rounded-sm border border-zinc-800 dark:border-zinc-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer">
+                    <svg className="w-3 h-3 md:w-3.5 md:h-3.5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703l-.333 4.965c.487 0 .702-.223.974-.488l2.338-2.274l4.86 3.59c.896.494 1.54.24 1.763-.829l3.19-15.035c.326-1.306-.5-1.9-1.352-1.564z"/>
                     </svg>
-                    <span className="text-[9px] font-black uppercase tracking-widest">Connect</span>
+                    <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest">Connect</span>
                   </div>
                 </TelegramLogin>
               )}
-              <button onClick={() => setShowSidebar(false)} className="p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800 rounded-sm transition-all text-zinc-950 dark:text-zinc-50 active:scale-90">
-                 <X size={20} />
+              <button onClick={() => setShowSidebar(false)} className="p-2 md:p-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent hover:border-zinc-200 dark:border-zinc-800 rounded-sm transition-all text-zinc-950 dark:text-zinc-50 active:scale-90">
+                 <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
           </div>
