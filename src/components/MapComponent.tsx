@@ -642,13 +642,14 @@ const MapComponent: React.FC = () => {
             <p className="text-zinc-400 dark:text-zinc-500 text-[11px] font-black uppercase tracking-[0.2em] mb-12 leading-relaxed px-4">Authenticate through secure Telegram channels to contribute to the global grid status.</p>
             <div className="flex justify-center">
               <TelegramLogin botName={process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || "lineless_help_bot"} onAuth={handleTelegramAuth} className="w-full h-16">
-                <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-4 rounded-sm border-2 border-zinc-800 dark:border-zinc-200 shadow-xl hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer">
-                  <Radio size={20} className="animate-pulse" />
-                  <span className="text-[12px] font-black uppercase tracking-[0.2em] italic">Join Terminal</span>
+                <div className="w-full h-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 flex items-center justify-center gap-3 rounded-sm border-2 border-zinc-800 dark:border-zinc-200 shadow-xl hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.703l-.333 4.965c.487 0 .702-.223.974-.488l2.338-2.274l4.86 3.59c.896.494 1.54.24 1.763-.829l3.19-15.035c.326-1.306-.5-1.9-1.352-1.564z"/>
+                  </svg>
+                  <span className="text-[14px] font-black uppercase tracking-[0.2em]">Connect</span>
                 </div>
               </TelegramLogin>
-            </div>
-          </div>
+            </div>          </div>
         </div>
       )}
 

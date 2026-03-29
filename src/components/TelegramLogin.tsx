@@ -49,13 +49,13 @@ const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl,
   return (
     <div className={`relative ${className}`}>
       {children && (
-        <div className="absolute inset-0 z-10 pointer-events-none">
+        <div className="absolute inset-0 z-10 pointer-events-auto">
           {children}
         </div>
       )}
       <div 
         ref={containerRef} 
-        className={children ? "opacity-0 absolute inset-0 z-20 [&>iframe]:!w-full [&>iframe]:!h-full" : ""}
+        className={children ? "opacity-0 absolute inset-0 z-20 [&>iframe]:!w-full [&>iframe]:!h-full [&>iframe]:!absolute [&>iframe]:!inset-0 cursor-pointer" : ""}
       />
     </div>
   );
