@@ -17,6 +17,7 @@ export function verifyTelegramHash(data: TelegramUserData, botToken: string): bo
   // sorted alphabetically, in the format key=<value> with a line feed
   const checkString = Object.keys(rest)
     .sort()
+    .filter(key => rest[key as keyof typeof rest] !== undefined && rest[key as keyof typeof rest] !== null)
     .map(key => `${key}=${rest[key as keyof typeof rest]}`)
     .join('\n');
 
