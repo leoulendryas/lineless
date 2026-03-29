@@ -404,7 +404,7 @@ const MapComponent: React.FC = () => {
           </div>
           
           <div className="flex gap-2">
-             <button onClick={locateUser} className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-950 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><MapPin size={14} /> Locate</button>
+             <button onClick={() => { locateUser(); setShowSidebar(false); }} className="flex-1 py-4 px-4 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-950 dark:text-zinc-50 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><MapPin size={14} /> Locate Me</button>
              <button onClick={fetchAllStations} disabled={scanning} className="flex-1 py-4 px-4 bg-zinc-950 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-400 text-white dark:text-zinc-950 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 flex items-center justify-center gap-2"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} /> Sync</button>
           </div>
 
