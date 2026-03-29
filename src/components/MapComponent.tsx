@@ -286,13 +286,6 @@ const MapComponent: React.FC = () => {
     } finally { setLoading(false); setScanning(false); }
   };
 
-  const handleSidebarClick = (s: Station) => {
-    if (mapRef) {
-      mapRef.flyTo([s.lat, s.lon], 16, { animate: true, duration: 1.5 });
-      setActivePopupId(s.id);
-    }
-  };
-
   const handleReport = async (station: Station, fuelType: string, status: string, queue: string) => {
     if (!userLocation) return alert('GPS data required to commit status.');
     const dist = getDistance(userLocation[0], userLocation[1], station.lat, station.lon);
@@ -310,7 +303,7 @@ const MapComponent: React.FC = () => {
   const locateUser = () => {
     if (!navigator.geolocation) return alert('GPS not supported');
     navigator.geolocation.getCurrentPosition((pos) => {
-      if (mapRef) mapRef.flyTo([pos.coords.latitude, pos.coords.longitude], 15);
+      if (mapRef) mapRef.flyTo([pos.coords.latitude, pos.coords.longitude], 15, { animate: true });
       setUserLocation([pos.coords.latitude, pos.coords.longitude]);
     });
   };
@@ -526,7 +519,6 @@ const MapComponent: React.FC = () => {
               : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"} 
           />
           <MapEvents setZoom={setZoomLevel} />
-          <MapRecenter location={userLocation} />
           
           {/* User Location Marker */}
           {userLocation && (
@@ -569,9 +561,15 @@ const MapComponent: React.FC = () => {
                   position={[station.lat, station.lon]} 
                   bubblingMouseEvents={false}
                   keyboard={false}
-                  eventHandlers={{ click: () => {
-                     setActivePopupId(station.id);
-                  }}}
+                  eventHandlers={{ 
+                    click: (e) => {
+                      setActivePopupId(station.id);
+                      if (mapRef) {
+                        mapRef.flyTo([station.lat, station.lon], mapRef.getZoom(), { animate: true });
+                      }
+                    },
+                    popupopen: () => setActivePopupId(station.id)
+                  }}
                   icon={L.divIcon({ 
                     className: '', 
                     html: zoomLevel < 12 
@@ -581,48 +579,44 @@ const MapComponent: React.FC = () => {
                     iconAnchor: [16, 16] 
                   })}
                 >
-
-                  {isActive && (
-                    <Popup 
-                      className="better-auth-popup" 
-                      eventHandlers={{ remove: () => setActivePopupId(null) }}
-                      autoPan={true}
-                    >
-                      <div className="min-w-[300px] md:min-w-[360px] p-2 bg-white dark:bg-zinc-950 transition-colors">
-                        <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-5">
-                          <h3 className="font-black text-xl tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase italic leading-none">{station.name}</h3>
-                          <div className={`w-3 h-3 rounded-full ${colorClass} border border-white dark:border-zinc-900 shadow-sm`}></div>
-                        </div>
-                        
-                        {station.type === 'fuel' || station.type === 'charging' ? (
-                          <div className="space-y-4">
-                            <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                            <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900 dark:text-zinc-50" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                            {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
-                          </div>
-                        ) : (
-                          <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm text-zinc-900 dark:text-zinc-50">
-                             <div className="flex items-center gap-3 mb-3">
-                               <Info size={16} className="text-zinc-400" />
-                               <span className="text-[11px] font-black uppercase tracking-widest">{station.type === 'parking' ? 'Storage Node' : 'Detialing Node'}</span>
-                             </div>
-                             <p className="text-[9px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-loose">Automated infrastructure tracking. Verification active for real-time status.</p>
-                          </div>
-                        )}
-
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setActivePopupId(station.id);
-                            setShowSidebar(true);
-                          }} 
-                          className="w-full mt-8 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 py-5 rounded-sm text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 border border-zinc-800 dark:border-white active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
-                        >
-                          <ChevronUp size={16} /> Open Detailed Terminal
-                        </button>
+                  <Popup 
+                    className="better-auth-popup" 
+                    autoPan={true}
+                  >
+                    <div className="min-w-[300px] md:min-w-[360px] p-2 bg-white dark:bg-zinc-950 transition-colors">
+                      <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                        <h3 className="font-black text-xl tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase italic leading-none">{station.name}</h3>
+                        <div className={`w-3 h-3 rounded-full ${colorClass} border border-white dark:border-zinc-900 shadow-sm`}></div>
                       </div>
-                    </Popup>
-                  )}
+                      
+                      {station.type === 'fuel' || station.type === 'charging' ? (
+                        <div className="space-y-4">
+                          <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                          <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900 dark:text-zinc-50" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                          {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
+                        </div>
+                      ) : (
+                        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm text-zinc-900 dark:text-zinc-50">
+                           <div className="flex items-center gap-3 mb-3">
+                             <Info size={16} className="text-zinc-400" />
+                             <span className="text-[11px] font-black uppercase tracking-widest">{station.type === 'parking' ? 'Storage Node' : 'Detialing Node'}</span>
+                           </div>
+                           <p className="text-[9px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest leading-loose">Automated infrastructure tracking. Verification active for real-time status.</p>
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (mapRef) mapRef.closePopup();
+                          setShowSidebar(true);
+                        }} 
+                        className="w-full mt-8 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 py-5 rounded-sm text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 border border-zinc-800 dark:border-white active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
+                      >
+                        <ChevronUp size={16} /> Open Detailed Terminal
+                      </button>
+                    </div>
+                  </Popup>
                 </Marker>
               );
             })}
