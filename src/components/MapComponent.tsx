@@ -341,11 +341,21 @@ const MapComponent: React.FC = () => {
   );
 
   const getQueueLabel = (q: string) => {
-    if (q === 'No Line') return 'Clear (< 20 Cars)';
-    if (q === 'Short') return 'Moderate (20 - 80 Cars)';
-    if (q === 'Medium') return 'Heavy (80 - 150 Cars)';
-    if (q === 'Long') return 'Endless (150+ / Blocks Road)';
-    return q || 'N/A';
+    // Handle legacy strings
+    if (q === 'No Line') return '0-20 Cars (Clear)';
+    if (q === 'Short') return '20-80 Cars (Moderate)';
+    if (q === 'Medium') return '80-150 Cars (Heavy)';
+    if (q === 'Long') return '150+ Cars (Endless)';
+
+    const count = parseInt(q);
+    if (isNaN(count)) return q || 'N/A';
+    
+    let label = 'Clear';
+    if (count >= 20 && count < 80) label = 'Moderate';
+    else if (count >= 80 && count < 150) label = 'Heavy';
+    else if (count >= 150) label = 'Endless';
+    
+    return `${count} Cars (${label})`;
   };
 
   return (
@@ -675,15 +685,15 @@ const MapComponent: React.FC = () => {
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
                 </div>
               </FormGroup>
-              <FormGroup label="Queue Intensity">
+              <FormGroup label="Approximate Queue (Cars)">
                 <div className="relative">
-                  <select id="queue-select" className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">
-                    <option value="No Line">Clear (&lt; 20 Units)</option>
-                    <option value="Short">Moderate (20 - 80 Units)</option>
-                    <option value="Medium">Heavy (80 - 150 Units)</option>
-                    <option value="Long">Endless (150+ / Blocks Road)</option>
-                  </select>
-                  <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
+                  <input 
+                    type="number" 
+                    id="queue-input" 
+                    placeholder="0"
+                    min="0"
+                    className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"
+                  />
                 </div>
               </FormGroup>
             </div>
@@ -692,8 +702,8 @@ const MapComponent: React.FC = () => {
               <button onClick={() => { 
                 const f = (document.getElementById('type-select') as HTMLSelectElement).value; 
                 const s = (document.getElementById('status-select') as HTMLSelectElement).value; 
-                const q = (document.getElementById('queue-select') as HTMLSelectElement).value; 
-                if (selectedStation) handleReport(selectedStation, f, s, q); 
+                const q = (document.getElementById('queue-input') as HTMLInputElement).value; 
+                if (selectedStation) handleReport(selectedStation, f, s, q || '0'); 
               }} className="flex-1 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-800 dark:border-zinc-200 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Commit</button>
             </div>
           </div>
