@@ -495,8 +495,8 @@ const MapComponent: React.FC = () => {
         )}
         
         {/* Map Legend */}
-        <div className="absolute bottom-8 right-8 z-[3000] flex flex-col gap-1 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md p-1 rounded-sm shadow-2xl border border-zinc-200 dark:border-zinc-800 min-w-[200px] md:min-w-[240px]">
-           <div className="bg-zinc-50 dark:bg-zinc-900 px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 mb-1 hidden md:block">
+        <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-[3000] flex flex-col gap-0.5 md:gap-1 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md p-0.5 md:p-1 rounded-sm shadow-2xl border border-zinc-200 dark:border-zinc-800 min-w-[140px] md:min-w-[240px]">
+           <div className="bg-zinc-50 dark:bg-zinc-900 px-3 py-2 md:px-5 md:py-4 border-b border-zinc-100 dark:border-zinc-800 mb-0.5 md:mb-1 hidden md:block">
              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50 leading-none">Grid</span>
            </div>
            <LegendItem color="bg-orange-500" label="Fuel Infrastructure" />
@@ -811,9 +811,9 @@ const DetailedStatus = ({ label, report, colorClass, getQueueLabel, onVote, user
 };
 
 const LegendItem = ({ color, label }: { color: string, label: string }) => (
-  <div className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-sm transition-colors cursor-default group">
-    <span className={`w-3 h-3 ${color} rounded-sm shadow-sm border border-white dark:border-zinc-800 group-hover:scale-125 transition-transform`}></span>
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-50">{label}</span>
+  <div className="flex items-center gap-2 md:gap-4 px-3 py-2 md:px-5 md:py-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-sm transition-colors cursor-default group">
+    <span className={`w-2 h-2 md:w-3 md:h-3 ${color} rounded-sm shadow-sm border border-white dark:border-zinc-800 group-hover:scale-125 transition-transform`}></span>
+    <span className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-zinc-900 dark:text-zinc-50">{label}</span>
   </div>
 );
 
