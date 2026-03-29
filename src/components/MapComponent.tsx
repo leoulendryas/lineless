@@ -341,10 +341,10 @@ const MapComponent: React.FC = () => {
   );
 
   const getQueueLabel = (q: string) => {
-    if (q === 'No Line') return 'Clear (< 10 Cars)';
-    if (q === 'Short') return 'Short (10 - 30 Cars)';
-    if (q === 'Medium') return 'Moderate (30 - 70 Cars)';
-    if (q === 'Long') return 'Extended (70+ Cars)';
+    if (q === 'No Line') return 'Clear (< 20 Cars)';
+    if (q === 'Short') return 'Moderate (20 - 80 Cars)';
+    if (q === 'Medium') return 'Heavy (80 - 150 Cars)';
+    if (q === 'Long') return 'Endless (150+ / Blocks Road)';
     return q || 'N/A';
   };
 
@@ -678,10 +678,10 @@ const MapComponent: React.FC = () => {
               <FormGroup label="Queue Intensity">
                 <div className="relative">
                   <select id="queue-select" className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50">
-                    <option value="No Line">Clear (&lt; 10 Units)</option>
-                    <option value="Short">Short (10 - 30 Units)</option>
-                    <option value="Medium">Moderate (30 - 70 Units)</option>
-                    <option value="Long">Extended (70+ Units)</option>
+                    <option value="No Line">Clear (&lt; 20 Units)</option>
+                    <option value="Short">Moderate (20 - 80 Units)</option>
+                    <option value="Medium">Heavy (80 - 150 Units)</option>
+                    <option value="Long">Endless (150+ / Blocks Road)</option>
                   </select>
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
                 </div>
