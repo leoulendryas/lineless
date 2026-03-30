@@ -518,16 +518,22 @@ const MapComponent: React.FC = () => {
         <MapContainer 
           center={ADDIS_ABABA_CENTER} 
           zoom={12} 
-          className="h-full w-full grayscale-[0.3] contrast-[1.1] transition-all" 
+          className="h-full w-full transition-all" 
           zoomControl={false}
           ref={setMapRef}
         >
           <TileLayer 
             attribution='&copy; CartoDB' 
             url={darkMode 
-              ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+              ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png" 
               : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"} 
           />
+          {darkMode && (
+            <TileLayer 
+              url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+              className="map-labels-layer"
+            />
+          )}
           <MapEvents setZoom={setZoomLevel} />
           
           {/* User Location Marker */}
@@ -715,6 +721,12 @@ const MapComponent: React.FC = () => {
         .leaflet-container { font-family: inherit; background: #ffffff; }
         .dark .leaflet-container { background: #09090b; }
         .leaflet-marker-icon { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
+        
+        /* Boost readability of labels in dark mode */
+        .map-labels-layer {
+          filter: brightness(1.6) contrast(1.2) !important;
+          z-index: 400;
+        }
         
         .better-auth-popup .leaflet-popup-content-wrapper { border-radius: 4px; padding: 0px; border: 2px solid #09090b; box-shadow: 5px 5px 0px 0px rgba(0,0,0,1); background: #ffffff; color: #09090b; overflow: hidden; }
         .dark .better-auth-popup .leaflet-popup-content-wrapper { background: #09090b; border-color: #fafafa; color: #fafafa; box-shadow: 5px 5px 0px 0px rgba(255,255,255,0.15); }
