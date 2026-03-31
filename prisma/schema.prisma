@@ -8,27 +8,50 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  telegramId String   @unique
-  firstName  String?
-  lastName   String?
-  username   String?
-  photoUrl   String?
-  trustScore Int      @default(0)
-  createdAt  DateTime @default(now())
-  reports    Report[]
+  id            String   @id @default(cuid())
+  telegramId    String   @unique
+  firstName     String?
+  lastName      String?
+  username      String?
+  photoUrl      String?
+  phoneNumber   String?
+  lastPlateUsed String?
+  trustScore    Int      @default(0)
+  createdAt     DateTime @default(now())
+  reports       Report[]
+  queueEntries  QueueEntry[]
 }
 
 model Station {
-  id         String   @id @default(cuid())
-  externalId String   @unique
-  name       String
-  type       String
-  lat        Float
-  lon        Float
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  reports    Report[]
+  id           String   @id @default(cuid())
+  externalId   String   @unique
+  name         String
+  type         String
+  lat          Float
+  lon          Float
+  accessKey    String?  @unique
+  isPartner    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reports      Report[]
+  queueEntries QueueEntry[]
+}
+
+model QueueEntry {
+  id            String   @id @default(cuid())
+  stationId     String
+  userId        String
+  ticketNumber  Int
+  plateNumber   String
+  phoneNumber   String
+  status        String   @default("WAITING") // WAITING, ACTIVE, SERVED, NO_SHOW, CANCELED
+  isWithinRange Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  station       Station  @relation(fields: [stationId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([stationId, ticketNumber])
 }
 
 model Report {

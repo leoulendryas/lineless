@@ -60,7 +60,7 @@ export async function DELETE() {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const data: any = Object.fromEntries(searchParams.entries());
+  const data = Object.fromEntries(searchParams.entries()) as unknown as TelegramUserData;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
   // If no hash, this is just a session check
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
   // This is a login redirect from Telegram
   if (!botToken) return NextResponse.json({ error: 'Server Configuration Error' }, { status: 500 });
 
-  const isValid = verifyTelegramHash(data as any, botToken);
+  const isValid = verifyTelegramHash(data, botToken);
   if (!isValid) return NextResponse.json({ error: 'Invalid authentication data' }, { status: 401 });
 
   const user = await prisma.user.upsert({

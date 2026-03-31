@@ -11,7 +11,7 @@ import TelegramLogin from './TelegramLogin';
 import { 
   Sun, Moon, MapPin, RefreshCw, X, ShoppingCart, 
   Coffee, Waves, UserCircle, CreditCard, ChevronUp, 
-  ChevronDown, Info, Radio, Zap, Fuel
+  ChevronDown, Info, Radio, Zap, Fuel, Check
 } from 'lucide-react';
 
 // Helper to calculate distance in meters
@@ -33,6 +33,8 @@ interface User {
   username?: string;
   photoUrl?: string;
   trustScore: number;
+  phoneNumber?: string;
+  lastPlateUsed?: string;
 }
 
 interface GlobalPrice {
@@ -65,10 +67,13 @@ interface FuelStatus {
 
 interface Station {
   id: number;
+  dbId?: string;
   lat: number;
   lon: number;
   name: string;
   type: 'fuel' | 'charging' | 'parking' | 'car_wash';
+  isPartner?: boolean;
+  queueCount?: number;
   amenities: {
     shop: boolean;
     cafe: boolean;
@@ -127,6 +132,30 @@ const LOCAL_INFRA_GRID = [
   { id: 9013, lat: 8.8812, lon: 38.8556, name: "Dukem Logistics Energy", type: "charging" },
 ];
 
+interface QueueEntry {
+  id: string;
+  stationId: string;
+  userId: string;
+  ticketNumber: number;
+  plateNumber: string;
+  phoneNumber: string;
+  status: 'WAITING' | 'ACTIVE' | 'SERVED' | 'NO_SHOW' | 'CANCELED';
+  isWithinRange: boolean;
+  createdAt: string;
+  updatedAt: string;
+  station?: Station;
+}
+
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 const MapComponent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
@@ -141,8 +170,12 @@ const MapComponent: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState(12);
-  const [syncError, setSyncFailed] = useState<string | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
+
+  // New Queue States
+  const [activeQueueEntry, setActiveQueueEntry] = useState<QueueEntry | null>(null);
+  const [showQueueJoin, setShowQueueJoin] = useState<Station | null>(null);
+  const [queueForm, setQueueForm] = useState({ plate: '', phone: '' });
 
   useEffect(() => { 
     fetchAllStations(); 
@@ -153,7 +186,7 @@ const MapComponent: React.FC = () => {
         (pos) => {
           const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
           setUserLocation(loc);
-          if (mapRef) mapRef.flyTo(loc, 15);
+          if (mapRef) mapRef.flyTo(loc, 15, { animate: true });
         },
         () => { console.log('Location access declined.'); },
         { timeout: 10000 }
@@ -161,10 +194,51 @@ const MapComponent: React.FC = () => {
     }
 
     if (mapRef) {
-       // @ts-ignore
+       // @ts-expect-error - Leaflet tap is not in types
        if (mapRef.tap) mapRef.tap.disable();
     }
   }, [mapRef]);
+
+  // Sync Geofence
+  useEffect(() => {
+    if (activeQueueEntry && userLocation && (activeQueueEntry.status === 'WAITING' || activeQueueEntry.status === 'ACTIVE')) {
+      const syncLocation = async () => {
+        try {
+          // Find station coords
+          const s = stations.find(st => st.dbId === activeQueueEntry.stationId) || activeQueueEntry.station;
+          if (!s) return;
+
+          const res = await fetch('/api/reports', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              queueId: activeQueueEntry.id,
+              lat: userLocation[0],
+              lon: userLocation[1],
+              stationLat: s.lat,
+              stationLon: s.lon
+            })
+          });
+          const data = await res.json();
+          if (data.entry) {
+            setActiveQueueEntry(data.entry);
+          }
+        } catch (e) { console.error('Geofence sync failed', e); }
+      };
+
+      const interval = setInterval(syncLocation, 20000); // 20s sync
+      return () => clearInterval(interval);
+    }
+  }, [activeQueueEntry, userLocation, stations]);
+
+  useEffect(() => {
+    if (user) {
+      setQueueForm({ 
+        plate: user.lastPlateUsed || '', 
+        phone: user.phoneNumber || '' 
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     const isDark = localStorage.getItem('lineless_dark_mode') === 'true' || 
@@ -182,6 +256,38 @@ const MapComponent: React.FC = () => {
     }
   }, [darkMode]);
 
+  const handleJoinQueue = async () => {
+    if (!user) return setShowAuthPrompt(true);
+    if (!showQueueJoin) return;
+    
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isQueueJoin: true,
+          externalId: String(showQueueJoin.id),
+          name: showQueueJoin.name,
+          type: showQueueJoin.type,
+          lat: showQueueJoin.lat,
+          lon: showQueueJoin.lon,
+          plateNumber: queueForm.plate,
+          phoneNumber: queueForm.phone
+        })
+      });
+      const data = await res.json();
+      if (data.entry) {
+        setActiveQueueEntry(data.entry);
+        setShowQueueJoin(null);
+        setShowSidebar(true);
+        // Refresh stations to show updated counts
+        fetchAllStations();
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (e) { console.error('Join failed', e); }
+  };
+
   const checkUser = async () => {
     try {
       const res = await fetch('/api/auth/telegram');
@@ -190,7 +296,7 @@ const MapComponent: React.FC = () => {
     } catch (e) { console.error('Check user failed', e); }
   };
 
-  const handleTelegramAuth = async (telegramUser: any) => {
+  const handleTelegramAuth = async (telegramUser: TelegramUser) => {
     try {
       const res = await fetch('/api/auth/telegram', {
         method: 'POST',
@@ -212,7 +318,7 @@ const MapComponent: React.FC = () => {
 
   const fetchAllStations = async () => {
     setScanning(true);
-    setSyncFailed(null);
+
     try {
       const query = `[out:json][timeout:60];(nwr["amenity"~"fuel|charging_station|parking|car_wash"](8.80,38.50,9.20,39.10);nwr["brand"~"Total|NOC|OLA|Yetebaberut|Gomeju|Kobil|TAF|Dalol|Global|Nile|Hambissa|Wodaj|Tulu|OiLibya|Horizon"](8.80,38.50,9.20,39.10););out center;`;
       const osmResponse = await fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
@@ -246,9 +352,12 @@ const MapComponent: React.FC = () => {
         
         return {
           id: el.id,
+          dbId: dbStation?.id,
           lat, lon,
-          name: tags.name || tags.brand || tags.operator || (type === 'parking' ? 'Secure Parking Hub' : type === 'car_wash' ? 'Clean Point' : 'Infrastructure Node'),
+          name: dbStation?.name || tags.name || tags.brand || tags.operator || (type === 'parking' ? 'Secure Parking Hub' : type === 'car_wash' ? 'Clean Point' : 'Infrastructure Node'),
           type,
+          isPartner: dbStation?.isPartner || false,
+          queueCount: dbStation?.queueCount || 0,
           amenities: {
             shop: !!(tags.shop || tags.amenity === 'shop' || tags.convenience || tags.supermarket || tags.kiosk),
             cafe: !!(tags.amenity === 'cafe' || tags.amenity === 'restaurant' || tags.cuisine || tags.fast_food || tags.food_court || tags.cafe === 'yes' || tags.name?.toLowerCase().includes('cafe') || tags.name?.toLowerCase().includes('coffee')),
@@ -272,7 +381,11 @@ const MapComponent: React.FC = () => {
         };
         return {
           ...local,
+          dbId: dbStation?.id,
+          name: dbStation?.name || local.name,
           type: local.type as 'fuel' | 'charging' | 'parking' | 'car_wash',
+          isPartner: dbStation?.isPartner || false,
+          queueCount: dbStation?.queueCount || 0,
           amenities: { shop: false, cafe: false, car_wash: false, toilets: false, atm: false },
           reports: { Benzene: formatFuel('Benzene'), Gasoline: formatFuel('Gasoline'), Electric: formatFuel('Electric') }
         };
@@ -281,8 +394,7 @@ const MapComponent: React.FC = () => {
       const uniqueLocal = localStations.filter(ls => !mappedOSM.some((os: Station) => Math.abs(os.lat - ls.lat) < 0.001 && Math.abs(os.lon - ls.lon) < 0.001));
       setStations([...mappedOSM, ...uniqueLocal]);
     } catch (e) { 
-      const msg = e instanceof Error ? e.message : 'Unknown';
-      setSyncFailed(msg);
+      // console.error(e);
     } finally { setLoading(false); setScanning(false); }
   };
 
@@ -426,9 +538,40 @@ const MapComponent: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 space-y-8 no-scrollbar relative">
+          {/* Active Ticket Banner */}
+          {activeQueueEntry && (activeQueueEntry.status === 'WAITING' || activeQueueEntry.status === 'ACTIVE') && (
+            <div className="p-6 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm border-2 border-zinc-800 dark:border-white shadow-2xl animate-in slide-in-from-top-4 duration-500">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-60 flex items-center gap-2">
+                    <Radio size={10} className="animate-pulse" /> Live Ticket
+                  </span>
+                  <h3 className="font-black tracking-tighter text-2xl uppercase italic leading-none">#{activeQueueEntry.ticketNumber}</h3>
+                </div>
+                <div className={`px-3 py-1 rounded-sm text-[8px] font-black uppercase tracking-widest border-2 ${activeQueueEntry.status === 'ACTIVE' ? 'bg-green-500 border-green-500 text-white' : 'bg-transparent border-white/20 dark:border-zinc-950/20'}`}>
+                  {activeQueueEntry.status}
+                </div>
+              </div>
+              <div className="flex flex-col gap-4 border-t border-white/10 dark:border-zinc-950/10 pt-6">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Plate</span>
+                    <span className="text-[12px] font-black uppercase tracking-widest">{activeQueueEntry.plateNumber}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Range Status</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
+                      {activeQueueEntry.isWithinRange ? <Check size={12} className="text-green-400" /> : <RefreshCw size={12} className="animate-spin" />}
+                      {activeQueueEntry.isWithinRange ? 'In 5km Zone' : 'Syncing GPS...'}
+                    </span>
+                 </div>
+              </div>
+              <p className="mt-6 text-[8px] font-black uppercase tracking-[0.2em] opacity-40 leading-relaxed text-center">Your spot is secured. Head to the station when active.</p>
+            </div>
+          )}
+
           <div className="sticky top-0 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md pt-2 pb-6 z-10 border-b border-zinc-200 dark:border-zinc-800">
              <div className="relative">
-               <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="w-full p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-950 dark:text-zinc-50">
+               <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="w-full p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-50 transition-all appearance-none cursor-pointer text-zinc-950 dark:text-zinc-50">
                   <option value="all">Pool: {stations.length}</option>
                   <option value="fuel">Fuel Hubs</option>
                   <option value="charging">Energy Nodes</option>
@@ -450,12 +593,37 @@ const MapComponent: React.FC = () => {
                     <div className="p-6 bg-white dark:bg-zinc-900 rounded-sm border-2 border-zinc-950 dark:border-zinc-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] transition-colors">
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 flex items-center gap-2"><Radio size={10} className="animate-pulse" /> Active Node</span>
+                          <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500 flex items-center gap-2">
+                             <Radio size={10} className="animate-pulse" /> {s.isPartner ? 'Verified Grid Node' : 'Active Node'}
+                          </span>
                           <h3 className="font-black text-zinc-950 dark:text-zinc-50 tracking-tight text-xl uppercase italic leading-none">{s.name}</h3>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 ${s.type === 'fuel' ? 'bg-orange-500' : s.type === 'charging' ? 'bg-blue-600' : s.type === 'parking' ? 'bg-zinc-400' : 'bg-green-500'}`}></div>
                       </div>
-                      <div className="flex gap-2">
+
+                      {/* Station Queue Info */}
+                      {s.isPartner && (
+                        <div className="mb-6 p-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm flex justify-between items-center shadow-lg border border-zinc-800 dark:border-zinc-200">
+                           <div className="flex flex-col">
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Digital Queue Depth</span>
+                              <span className="text-xl font-black tracking-tighter italic uppercase">{s.queueCount || 0} Registered</span>
+                           </div>
+                           <ChevronDown size={18} className="animate-bounce opacity-40" />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col gap-2">
+                        {s.isPartner && (
+                          <button 
+                            onClick={() => {
+                              if (user) setShowQueueJoin(s);
+                              else setShowAuthPrompt(true);
+                            }}
+                            className="w-full py-5 bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 border-2 border-zinc-950 dark:border-zinc-50 rounded-sm font-black text-[12px] uppercase tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none transition-all flex items-center justify-center gap-3"
+                          >
+                            <Zap size={18} /> Get a Spot
+                          </button>
+                        )}
                         {(s.type === 'fuel' || s.type === 'charging') && (
                           <button 
                             onClick={() => {
@@ -513,6 +681,15 @@ const MapComponent: React.FC = () => {
            <LegendItem color="bg-blue-600" label="Energy Hubs" />
            <LegendItem color="bg-zinc-400" label="Public Parking" />
            <LegendItem color="bg-green-500" label="Service Centers" />
+           <div className="flex items-center gap-2 md:gap-4 px-3 py-2 md:px-5 md:py-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-sm transition-colors cursor-default group border-t border-zinc-100 dark:border-zinc-800 mt-1">
+             <div className="relative">
+               <div className="w-2 h-2 md:w-3 md:h-3 bg-white dark:bg-zinc-800 rounded-sm shadow-sm border border-zinc-200 dark:border-zinc-700"></div>
+               <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 border border-zinc-950 flex items-center justify-center">
+                 <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="6" className="text-zinc-950"><polyline points="20 6 9 17 4 12"></polyline></svg>
+               </div>
+             </div>
+             <span className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-zinc-950 dark:text-zinc-50">Verified Node</span>
+           </div>
         </div>
         
         <MapContainer 
@@ -555,7 +732,7 @@ const MapComponent: React.FC = () => {
             chunkedLoading
             showCoverageOnHover={false}
             maxClusterRadius={50}
-            iconCreateFunction={(cluster: any) => {
+            iconCreateFunction={(cluster: L.MarkerCluster) => {
               const count = cluster.getChildCount();
               return L.divIcon({
                 html: `<div class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-zinc-950 dark:text-zinc-50 text-[11px] font-black w-10 h-10 rounded-sm flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] border-2 border-zinc-950 dark:border-zinc-50 hover:scale-110 transition-transform">${count}</div>`,
@@ -570,6 +747,7 @@ const MapComponent: React.FC = () => {
               const isCarWash = station.type === 'car_wash';
               const colorClass = isFuel ? 'bg-orange-500' : isParking ? 'bg-zinc-400' : isCarWash ? 'bg-green-500' : 'bg-blue-600';
               const isActive = activePopupId === station.id;
+              const isPartner = station.isPartner;
 
               return (
                 <Marker 
@@ -590,7 +768,10 @@ const MapComponent: React.FC = () => {
                     className: '', 
                     html: zoomLevel < 12 
                       ? `<div class="w-3 h-3 ${colorClass} rounded-full border-2 border-white dark:border-zinc-900 shadow-md ${isActive ? 'scale-150 ring-2 ring-zinc-950 dark:ring-zinc-50' : ''}"></div>` 
-                      : `<div class="w-8 h-8 ${colorClass} border border-white dark:border-zinc-950 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] flex items-center justify-center text-[11px] text-white font-black rounded-sm ${isActive ? 'scale-125 ring-2 ring-zinc-950 dark:ring-zinc-50' : ''}">${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}</div>`, 
+                      : `<div class="w-8 h-8 ${colorClass} border border-white dark:border-zinc-950 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] flex items-center justify-center text-[11px] text-white font-black rounded-sm relative ${isActive ? 'scale-125 ring-2 ring-zinc-950 dark:ring-zinc-50' : ''}">
+                          ${isFuel ? 'F' : isParking ? 'P' : isCarWash ? 'W' : 'E'}
+                          ${isPartner ? `<div class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-yellow-400 text-zinc-950 border border-zinc-950 flex items-center justify-center shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="square" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>` : ''}
+                        </div>`, 
                     iconSize: [32, 32], 
                     iconAnchor: [16, 16] 
                   })}
@@ -711,6 +892,52 @@ const MapComponent: React.FC = () => {
                 const q = (document.getElementById('queue-input') as HTMLInputElement).value; 
                 if (selectedStation) handleReport(selectedStation, f, s, q || '0'); 
               }} className="flex-1 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 py-5 rounded-sm font-black text-[11px] uppercase tracking-[0.2em] border-2 border-zinc-800 dark:border-zinc-200 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Commit</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Queue Join Modal */}
+      {showQueueJoin && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/60 dark:bg-zinc-950/80 backdrop-blur-md p-4">
+          <div className="bg-white dark:bg-zinc-900 p-12 rounded-sm shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)] w-full max-w-[520px] border-2 border-zinc-900 dark:border-zinc-50 relative animate-in zoom-in-95 duration-500">
+            <button onClick={() => setShowQueueJoin(null)} className="absolute top-6 right-6 p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-sm transition-all text-zinc-900 dark:text-zinc-50"><X size={24} /></button>
+            <div className="flex items-center gap-4 mb-2">
+               <Radio size={20} className="text-zinc-900 dark:text-zinc-50 animate-pulse" />
+               <h3 className="font-black text-4xl text-zinc-900 dark:text-zinc-50 tracking-tighter uppercase italic">Register</h3>
+            </div>
+            <p className="text-zinc-400 dark:text-zinc-500 text-[11px] font-black uppercase tracking-[0.3em] mb-12 border-b border-zinc-100 dark:border-zinc-800 pb-6">Join Digital Queue for {showQueueJoin.name}</p>
+            
+            <div className="space-y-8">
+              <FormGroup label="Plate Number">
+                <input 
+                  type="text" 
+                  value={queueForm.plate}
+                  onChange={(e) => setQueueForm({ ...queueForm, plate: e.target.value.toUpperCase() })}
+                  placeholder="AA 2-12345"
+                  className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"
+                />
+              </FormGroup>
+              <FormGroup label="Contact Number">
+                <input 
+                  type="tel" 
+                  value={queueForm.phone}
+                  onChange={(e) => setQueueForm({ ...queueForm, phone: e.target.value })}
+                  placeholder="0911000000"
+                  className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"
+                />
+              </FormGroup>
+            </div>
+
+            <div className="flex flex-col gap-4 mt-12">
+               <button 
+                 onClick={handleJoinQueue}
+                 disabled={!queueForm.plate || !queueForm.phone}
+                 className="w-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 py-6 rounded-sm font-black text-[12px] uppercase tracking-[0.2em] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none transition-all disabled:opacity-50"
+               >
+                 Confirm Spot Registration
+               </button>
+               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center leading-relaxed">By registering, you agree to show up within the 5km zone. Failure to appear will impact your Trust Score.</p>
             </div>
           </div>
         </div>
@@ -845,12 +1072,6 @@ const FormGroup = ({ label, children }: { label: string, children: React.ReactNo
 
 const MapEvents = ({ setZoom }: { setZoom: (z: number) => void }) => {
   useMapEvents({ zoomend: (e) => setZoom(e.target.getZoom()) });
-  return null;
-};
-
-const MapRecenter = ({ location }: { location: [number, number] | null }) => {
-  const map = useMap();
-  useEffect(() => { if (location) map.flyTo(location, 15); }, [location, map]);
   return null;
 };
 

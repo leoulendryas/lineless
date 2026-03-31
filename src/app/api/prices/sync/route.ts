@@ -24,10 +24,11 @@ export async function GET() {
     } else {
       throw result.error;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
       error: 'Failed to sync prices', 
-      message: error.message 
+      message 
     }, { status: 500 });
   }
 }

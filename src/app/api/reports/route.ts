@@ -28,6 +28,11 @@ export async function GET() {
             },
             orderBy: { createdAt: 'desc' },
             include: { user: true }
+          },
+          queueEntries: {
+            where: {
+              status: { in: ['WAITING', 'ACTIVE'] }
+            }
           }
         }
       }),
@@ -38,7 +43,6 @@ export async function GET() {
     });
 
     const priceMap = prices.reduce((acc: PriceMap, p) => {
-      // Simulate live market fluctuation (jitter of +/- 0.05%)
       const jitter = (Math.random() - 0.5) * 0.1; 
       const dynamicPrice = p.price + jitter;
       
@@ -73,7 +77,8 @@ export async function GET() {
         ...station,
         Benzene: getStats('Benzene'),
         Gasoline: getStats('Gasoline'),
-        Electric: getStats('Electric')
+        Electric: getStats('Electric'),
+        queueCount: station.queueEntries.length
       };
     });
 
@@ -81,12 +86,12 @@ export async function GET() {
       stations: processedStations,
       prices: priceMap
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('GET /api/reports error:', error);
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json({ 
       error: 'Failed to fetch reports', 
-      message: error.message || 'Internal Server Error',
-      hint: 'Verify DATABASE_URL in Vercel settings and ensure the DB has been initialized.'
+      message
     }, { status: 500 });
   }
 }
@@ -95,58 +100,95 @@ export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get('lineless_user_id')?.value;
-
-    const body = await request.json();
-    const { externalId, name, type, lat, lon, fuelType, status, queue, reportId, action } = body;
-
-    if (reportId && action) {
-      if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const report = await prisma.report.findUnique({
-        where: { id: reportId },
-        include: { user: true }
-      });
-
-      if (!report) {
-        return NextResponse.json({ error: 'Report not found' }, { status: 404 });
-      }
-
-      // Prevent voting on own report
-      if (report.userId === userId) {
-        return NextResponse.json({ error: 'Cannot vote on your own report' }, { status: 400 });
-      }
-
-      const isUpvote = action === 'upvote';
-      const updateData = isUpvote ? { upvotes: { increment: 1 } } : { downvotes: { increment: 1 } };
-      
-      const updatedReport = await prisma.report.update({
-        where: { id: reportId },
-        data: updateData
-      });
-
-      // Update author's trust score
-      if (report.userId) {
-        await prisma.user.update({
-          where: { id: report.userId },
-          data: { trustScore: { increment: isUpvote ? 1 : -1 } }
-        });
-      }
-
-      return NextResponse.json({ report: updatedReport });
-    }
-
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const body = await request.json();
+    const { 
+      externalId, name, type, lat, lon, 
+      fuelType, status, queue, 
+      reportId, action,
+      isQueueJoin, plateNumber, phoneNumber
+    } = body;
+
+    // Handle Upvote/Downvote
+    if (reportId && action) {
+      const report = await prisma.report.findUnique({
+        where: { id: reportId }
+      });
+
+      if (!report) return NextResponse.json({ error: 'Report not found' }, { status: 404 });
+      if (report.userId === userId) return NextResponse.json({ error: 'Cannot vote on your own report' }, { status: 400 });
+
+      const isUpvote = action === 'upvote';
+      await prisma.$transaction([
+        prisma.report.update({
+          where: { id: reportId },
+          data: isUpvote ? { upvotes: { increment: 1 } } : { downvotes: { increment: 1 } }
+        }),
+        prisma.user.update({
+          where: { id: report.userId! },
+          data: { trustScore: { increment: isUpvote ? 1 : -1 } }
+        })
+      ]);
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Upsert Station
     const station = await prisma.station.upsert({
-      where: { externalId },
-      update: { name, type, lat, lon },
-      create: { externalId, name, type, lat, lon },
+      where: { externalId: String(externalId) },
+      update: { 
+        name, 
+        type, 
+        lat, 
+        lon,
+        // Only update these if they are provided (e.g. from Admin Panel)
+        ...(body.isPartner !== undefined && { isPartner: body.isPartner }),
+        ...(body.accessKey && { accessKey: body.accessKey })
+      },
+      create: { 
+        externalId: String(externalId), 
+        name, 
+        type, 
+        lat, 
+        lon,
+        isPartner: body.isPartner || false,
+        accessKey: body.accessKey || null
+      },
     });
 
+    // Handle Queue Join
+    if (isQueueJoin) {
+      const lastEntry = await prisma.queueEntry.findFirst({
+        where: { stationId: station.id },
+        orderBy: { ticketNumber: 'desc' },
+        select: { ticketNumber: true }
+      });
+
+      const ticketNumber = (lastEntry?.ticketNumber || 0) + 1;
+
+      const entry = await prisma.queueEntry.create({
+        data: {
+          stationId: station.id,
+          userId,
+          ticketNumber,
+          plateNumber,
+          phoneNumber,
+          status: 'WAITING'
+        }
+      });
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { lastPlateUsed: plateNumber, phoneNumber }
+      });
+
+      return NextResponse.json({ entry });
+    }
+
+    // Handle Standard Report
     const report = await prisma.report.create({
       data: {
         stationId: station.id,
@@ -160,6 +202,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ station, report });
   } catch (error) {
     console.error('POST /api/reports error:', error);
-    return NextResponse.json({ error: 'Failed to process report' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { queueId, lat, lon, stationLat, stationLon } = await request.json();
+
+    const R = 6371; // km
+    const dLat = (stationLat - lat) * Math.PI / 180;
+    const dLon = (stationLon - lon) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+
+    const isWithinRange = distance <= 5;
+
+    const entry = await prisma.queueEntry.update({
+      where: { id: queueId },
+      data: { 
+        isWithinRange,
+        status: isWithinRange ? 'ACTIVE' : 'WAITING'
+      }
+    });
+
+    return NextResponse.json({ entry });
+  } catch (error) {
+    console.error('PATCH /api/reports error:', error);
+    return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
   }
 }

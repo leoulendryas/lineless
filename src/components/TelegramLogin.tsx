@@ -2,9 +2,19 @@
 
 import React, { useEffect, useRef } from 'react';
 
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 interface TelegramLoginProps {
   botName: string;
-  onAuth?: (user: any) => void;
+  onAuth?: (user: TelegramUser) => void;
   authUrl?: string;
   className?: string;
   children?: React.ReactNode;
@@ -14,8 +24,11 @@ const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl,
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const currentContainer = containerRef.current;
+
     if (onAuth) {
-      (window as any).onTelegramAuth = (user: any) => {
+      // @ts-expect-error - onTelegramAuth is a custom property on window
+      window.onTelegramAuth = (user: TelegramUser) => {
         onAuth(user);
       };
     }
@@ -35,13 +48,13 @@ const TelegramLogin: React.FC<TelegramLoginProps> = ({ botName, onAuth, authUrl,
     script.setAttribute('data-request-access', 'write');
     script.async = true;
 
-    if (containerRef.current) {
-      containerRef.current.appendChild(script);
+    if (currentContainer) {
+      currentContainer.appendChild(script);
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      if (currentContainer) {
+        currentContainer.innerHTML = '';
       }
     };
   }, [botName, onAuth, authUrl]);
