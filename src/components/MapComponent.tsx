@@ -474,7 +474,7 @@ const MapComponent: React.FC = () => {
   return (
     <div className="flex h-full w-full overflow-hidden bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-900 selection:text-white transition-colors duration-500 relative">
       {/* Sidebar Terminal */}
-      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
+      <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col overflow-y-auto no-scrollbar ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
         <div className="p-4 md:p-10 pb-6 flex flex-col gap-6 md:gap-10 relative">
