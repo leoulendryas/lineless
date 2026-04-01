@@ -477,7 +477,7 @@ const MapComponent: React.FC = () => {
       <aside className={`fixed md:relative inset-y-0 left-0 transition-all duration-500 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 z-[3000] flex flex-col overflow-y-auto no-scrollbar ${showSidebar ? 'w-full md:w-[460px] translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 overflow-hidden'}`}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         
-        <div className="p-4 md:p-10 pb-6 flex flex-col gap-6 md:gap-10 relative">
+        <div className="p-4 md:p-10 pb-6 flex flex-col gap-6 md:gap-10 relative shrink-0">
           <div className="flex justify-between items-center gap-2">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 md:gap-3">
@@ -538,7 +538,7 @@ const MapComponent: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 space-y-8 no-scrollbar relative">
+        <div className="flex-1 px-6 md:px-10 pb-10 space-y-8 relative">
           {/* Active Ticket Banner */}
           {activeQueueEntry && (activeQueueEntry.status === 'WAITING' || activeQueueEntry.status === 'ACTIVE') && (
             <div className="p-6 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm border-2 border-zinc-800 dark:border-white shadow-2xl animate-in slide-in-from-top-4 duration-500">
