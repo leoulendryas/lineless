@@ -19,7 +19,10 @@ export async function GET() {
       throw new Error('Prisma client not initialized');
     }
 
-    const [stations, prices] = await Promise.all([
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('lineless_user_id')?.value;
+
+    const [stations, prices, activeQueueEntry] = await Promise.all([
       prisma.station.findMany({
         include: {
           reports: {
@@ -36,7 +39,14 @@ export async function GET() {
           }
         }
       }),
-      prisma.globalPrice.findMany()
+      prisma.globalPrice.findMany(),
+      userId ? prisma.queueEntry.findFirst({
+        where: {
+          userId,
+          status: { in: ['WAITING', 'ACTIVE'] }
+        },
+        include: { station: true }
+      }) : Promise.resolve(null)
     ]).catch(err => {
       console.error('Database Query Error:', err);
       throw new Error(`Database connection failed: ${err.message}`);
@@ -84,7 +94,8 @@ export async function GET() {
 
     return NextResponse.json({
       stations: processedStations,
-      prices: priceMap
+      prices: priceMap,
+      activeQueueEntry
     });
   } catch (error: unknown) {
     console.error('GET /api/reports error:', error);
@@ -161,6 +172,21 @@ export async function POST(request: Request) {
 
     // Handle Queue Join
     if (isQueueJoin) {
+      // Check for existing active registration
+      const existingActive = await prisma.queueEntry.findFirst({
+        where: {
+          userId,
+          status: { in: ['WAITING', 'ACTIVE'] }
+        }
+      });
+
+      if (existingActive) {
+        return NextResponse.json({ 
+          error: 'Already Registered', 
+          message: 'You already have an active spot in another queue.' 
+        }, { status: 400 });
+      }
+
       const lastEntry = await prisma.queueEntry.findFirst({
         where: { stationId: station.id },
         orderBy: { ticketNumber: 'desc' },

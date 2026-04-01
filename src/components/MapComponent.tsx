@@ -326,8 +326,9 @@ const MapComponent: React.FC = () => {
       const osmData = await osmResponse.json();
       
       const dbResponse = await fetch('/api/reports');
-      const { stations: dbStations, prices } = await dbResponse.json();
+      const { stations: dbStations, prices, activeQueueEntry: activeEntry } = await dbResponse.json();
       setGlobalPrices(prices);
+      if (activeEntry) setActiveQueueEntry(activeEntry);
 
       const mappedOSM = osmData.elements.map((el: OSMElement) => {
         const lat = el.lat || el.center?.lat;
@@ -614,15 +615,35 @@ const MapComponent: React.FC = () => {
 
                       <div className="flex flex-col gap-2">
                         {s.isPartner && (
-                          <button 
-                            onClick={() => {
-                              if (user) setShowQueueJoin(s);
-                              else setShowAuthPrompt(true);
-                            }}
-                            className="w-full py-5 bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 border-2 border-zinc-950 dark:border-zinc-50 rounded-sm font-black text-[12px] uppercase tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none transition-all flex items-center justify-center gap-3"
-                          >
-                            <Zap size={18} /> Get a Spot
-                          </button>
+                          activeQueueEntry && activeQueueEntry.stationId === s.dbId ? (
+                            <div className="w-full p-6 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm border-2 border-zinc-800 dark:border-white shadow-xl flex flex-col items-center gap-3">
+                               <div className="flex items-center gap-2">
+                                 <Check size={16} className="text-green-500" />
+                                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Your Spot is Secured</span>
+                               </div>
+                               <h4 className="text-4xl font-black tracking-tighter italic uppercase">#{activeQueueEntry.ticketNumber}</h4>
+                               <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-60">Status: {activeQueueEntry.status}</p>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={() => {
+                                if (activeQueueEntry) {
+                                  alert(`Already registered at ${activeQueueEntry.station?.name || 'another station'}. Clear that spot first.`);
+                                  return;
+                                }
+                                if (user) setShowQueueJoin(s);
+                                else setShowAuthPrompt(true);
+                              }}
+                              disabled={!!activeQueueEntry && activeQueueEntry.stationId !== s.dbId}
+                              className={`w-full py-5 rounded-sm font-black text-[12px] uppercase tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none transition-all flex items-center justify-center gap-3 ${
+                                activeQueueEntry && activeQueueEntry.stationId !== s.dbId 
+                                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700 cursor-not-allowed shadow-none hover:translate-x-0 hover:translate-y-0' 
+                                : 'bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 border-2 border-zinc-950 dark:border-zinc-50'
+                              }`}
+                            >
+                              <Zap size={18} /> {activeQueueEntry && activeQueueEntry.stationId !== s.dbId ? 'Registered Elsewhere' : 'Get a Spot'}
+                            </button>
+                          )
                         )}
                         {(s.type === 'fuel' || s.type === 'charging') && (
                           <button 
