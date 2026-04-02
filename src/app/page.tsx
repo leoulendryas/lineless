@@ -13,7 +13,6 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
           <div className="absolute inset-0 border-4 border-zinc-900 dark:border-zinc-50 animate-[spin_3s_linear_infinite] rounded-sm"></div>
           <div className="absolute inset-2 border-2 border-zinc-200 dark:border-zinc-800 animate-[spin_2s_linear_infinite_reverse] rounded-sm shadow-xl"></div>
         </div>
-        <span className="text-[11px] font-black uppercase tracking-[0.5em] text-zinc-900 dark:text-zinc-50 animate-pulse">Initializing Grid Link</span>
       </div>
     </div>
   )
@@ -31,7 +30,6 @@ export default function Home() {
       <div className="h-full w-full flex items-center justify-center bg-white dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-6">
           <div className="w-10 h-10 border-4 border-zinc-900 dark:border-zinc-50 border-t-transparent animate-spin rounded-full"></div>
-          <span className="text-[11px] font-black uppercase tracking-[0.5em] text-zinc-900 dark:text-zinc-50">Syncing...</span>
         </div>
       </div>
     );

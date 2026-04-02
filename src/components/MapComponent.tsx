@@ -448,7 +448,6 @@ const MapComponent: React.FC = () => {
           <div className="w-4 h-4 bg-zinc-200 dark:bg-zinc-800"></div>
           <div className="w-4 h-4 bg-zinc-900 dark:bg-zinc-50"></div>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-900 dark:text-zinc-50">Lineless Grid Initializing</span>
       </div>
     </div>
   );
@@ -809,9 +808,15 @@ const MapComponent: React.FC = () => {
                       
                       {station.type === 'fuel' || station.type === 'charging' ? (
                         <div className="space-y-4">
-                          <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                          <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900 dark:text-zinc-50" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
-                          {(station.type === 'charging' || station.reports.Electric.stats.total > 0) && <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />}
+                          {station.type === 'fuel' && (
+                            <>
+                              <DetailedStatus label="Benzene" report={station.reports.Benzene} colorClass="text-orange-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                              <DetailedStatus label="Diesel" report={station.reports.Gasoline} colorClass="text-zinc-900 dark:text-zinc-50" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                            </>
+                          )}
+                          {(station.type === 'charging' || (station.type === 'fuel' && station.reports.Electric.stats.total > 0)) && (
+                            <DetailedStatus label="Electric" report={station.reports.Electric} colorClass="text-blue-600" getQueueLabel={getQueueLabel} onVote={handleVote} userId={user?.id} />
+                          )}
                         </div>
                       ) : (
                         <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-sm text-zinc-900 dark:text-zinc-50">
