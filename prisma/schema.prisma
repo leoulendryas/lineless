@@ -46,6 +46,8 @@ model QueueEntry {
   phoneNumber   String
   status        String    @default("WAITING")
   isWithinRange Boolean   @default(false)
+  notified20    Boolean   @default(false)
+  notified5     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   fuelType      String    @default("Benzene")
