@@ -54,7 +54,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { queueId, action } = await request.json();
+    const { queueId, action, liters } = await request.json();
 
     const entry = await prisma.queueEntry.findUnique({
       where: { id: queueId },
@@ -68,11 +68,15 @@ export async function POST(request: Request) {
     const newStatus = action === 'SERVED' ? 'SERVED' : 'NO_SHOW';
     const trustAdjustment = action === 'SERVED' ? 2 : -10;
 
-    // Update entry status and user trust score
+    // Update entry status, user trust score, and government oversight data
     await prisma.$transaction([
       prisma.queueEntry.update({
         where: { id: queueId },
-        data: { status: newStatus }
+        data: { 
+          status: newStatus,
+          litersPumped: action === 'SERVED' ? parseFloat(liters) || 0 : null,
+          servedAt: action === 'SERVED' ? new Date() : null
+        }
       }),
       prisma.user.update({
         where: { id: entry.userId },

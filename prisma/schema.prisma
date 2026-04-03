@@ -47,8 +47,10 @@ model QueueEntry {
   fuelType      String   @default("Benzene") // Benzene, Diesel, Electric
   status        String   @default("WAITING") // WAITING, ACTIVE, SERVED, NO_SHOW, CANCELED
   isWithinRange Boolean  @default(false)
+  litersPumped  Float?   // Amount of fuel received
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  servedAt      DateTime? // The exact time they were cleared
   station       Station  @relation(fields: [stationId], references: [id])
   user          User     @relation(fields: [userId], references: [id])
 

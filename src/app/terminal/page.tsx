@@ -119,12 +119,12 @@ const TerminalPage = () => {
     }
   };
 
-  const handleAction = async (queueId: string, action: 'SERVED' | 'NO_SHOW') => {
+  const handleAction = async (queueId: string, action: 'SERVED' | 'NO_SHOW', liters?: string) => {
     try {
       const res = await fetch('/api/terminal/queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queueId, action })
+        body: JSON.stringify({ queueId, action, liters })
       });
       if (res.ok) {
         fetchQueue();
@@ -276,9 +276,22 @@ const TerminalPage = () => {
                   </div>
 
                   <div className="flex gap-4">
+                    <div className="flex-1 relative">
+                       <input 
+                         type="number" 
+                         placeholder="Liters Pumped" 
+                         id={`liters-${entry.id}`}
+                         className="w-full h-14 bg-zinc-50 border-2 border-zinc-200 px-5 rounded-sm text-[11px] font-black outline-none focus:border-zinc-950 transition-all text-zinc-950"
+                       />
+                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-zinc-300 uppercase">L</span>
+                    </div>
                     <button 
-                      onClick={() => handleAction(entry.id, 'SERVED')}
-                      className="flex-1 h-14 bg-zinc-950 text-white rounded-sm font-black text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3"
+                      onClick={() => {
+                        const val = (document.getElementById(`liters-${entry.id}`) as HTMLInputElement).value;
+                        if (!val) return alert('Enter pumped amount for government audit.');
+                        handleAction(entry.id, 'SERVED', val);
+                      }}
+                      className="flex-[1.5] h-14 bg-zinc-950 text-white rounded-sm font-black text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-800 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3"
                     >
                       <Check size={18} /> Clear Unit
                     </button>

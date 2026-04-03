@@ -192,6 +192,26 @@ export async function POST(request: Request) {
         }, { status: 400 });
       }
 
+      // ARBITRAGE CHECK: Check if vehicle was served within the last 4 hours
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      const recentServed = await prisma.queueEntry.findFirst({
+        where: {
+          plateNumber,
+          status: 'SERVED',
+          servedAt: { gte: fourHoursAgo }
+        },
+        orderBy: { servedAt: 'desc' },
+        include: { station: true }
+      });
+
+      if (recentServed) {
+        const nextAvailable = new Date(recentServed.servedAt!.getTime() + 4 * 60 * 60 * 1000);
+        return NextResponse.json({ 
+          error: 'Arbitrage Alert', 
+          message: `Vehicle ${plateNumber} was recently served at ${recentServed.station.name}. Next refuel allowed after ${nextAvailable.toLocaleTimeString()}.` 
+        }, { status: 403 });
+      }
+
       const lastEntry = await prisma.queueEntry.findFirst({
         where: { stationId: station.id },
         orderBy: { ticketNumber: 'desc' },
