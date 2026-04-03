@@ -235,10 +235,11 @@ const MapComponent: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setQueueForm({ 
+      setQueueForm(prev => ({ 
+        ...prev,
         plate: user.lastPlateUsed || '', 
         phone: user.phoneNumber || '' 
-      });
+      }));
     }
   }, [user]);
 
