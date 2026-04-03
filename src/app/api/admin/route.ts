@@ -19,6 +19,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ stations });
     }
 
+    if (action === 'REPORTS') {
+      const [totalServed, litersByFuel, topConsumers, stationEfficiency] = await Promise.all([
+        prisma.queueEntry.count({ where: { status: 'SERVED' } }),
+        prisma.queueEntry.groupBy({
+          by: ['fuelType'],
+          where: { status: 'SERVED' },
+          _sum: { litersPumped: true }
+        }),
+        prisma.queueEntry.groupBy({
+          by: ['plateNumber'],
+          where: { status: 'SERVED' },
+          _count: { id: true },
+          _sum: { litersPumped: true },
+          orderBy: { _sum: { litersPumped: 'desc' } },
+          take: 10
+        }),
+        prisma.station.findMany({
+          include: {
+            _count: {
+              select: { queueEntries: { where: { status: 'SERVED' } } }
+            }
+          },
+          orderBy: { queueEntries: { _count: 'desc' } },
+          take: 5
+        })
+      ]);
+
+      return NextResponse.json({ 
+        totalServed, 
+        litersByFuel, 
+        topConsumers, 
+        stationEfficiency 
+      });
+    }
+
     if (action === 'UPSERT') {
       const station = await prisma.station.upsert({
         where: { externalId: String(externalId) },

@@ -8,51 +8,51 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  telegramId    String   @unique
+  id            String       @id @default(cuid())
+  telegramId    String       @unique
   firstName     String?
   lastName      String?
   username      String?
   photoUrl      String?
   phoneNumber   String?
   lastPlateUsed String?
-  trustScore    Int      @default(0)
-  createdAt     DateTime @default(now())
-  reports       Report[]
+  trustScore    Int          @default(0)
+  createdAt     DateTime     @default(now())
   queueEntries  QueueEntry[]
+  reports       Report[]
 }
 
 model Station {
-  id           String   @id @default(cuid())
-  externalId   String   @unique
+  id           String       @id @default(cuid())
+  externalId   String       @unique
   name         String
   type         String
   lat          Float
   lon          Float
-  accessKey    String?  @unique
-  isPartner    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  reports      Report[]
+  accessKey    String?      @unique
+  isPartner    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   queueEntries QueueEntry[]
+  reports      Report[]
 }
 
 model QueueEntry {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   stationId     String
   userId        String
   ticketNumber  Int
   plateNumber   String
   phoneNumber   String
-  fuelType      String   @default("Benzene") // Benzene, Diesel, Electric
-  status        String   @default("WAITING") // WAITING, ACTIVE, SERVED, NO_SHOW, CANCELED
-  isWithinRange Boolean  @default(false)
-  litersPumped  Float?   // Amount of fuel received
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  servedAt      DateTime? // The exact time they were cleared
-  station       Station  @relation(fields: [stationId], references: [id])
-  user          User     @relation(fields: [userId], references: [id])
+  status        String    @default("WAITING")
+  isWithinRange Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  fuelType      String    @default("Benzene")
+  litersPumped  Float?
+  servedAt      DateTime?
+  station       Station   @relation(fields: [stationId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 
   @@unique([stationId, ticketNumber])
 }
