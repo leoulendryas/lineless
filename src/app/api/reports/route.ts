@@ -226,9 +226,14 @@ export async function POST(request: Request) {
         const nextAvailable = new Date(lastServed.servedAt.getTime() + cooldownHours * 60 * 60 * 1000);
         
         if (new Date() < nextAvailable) {
+          const diffMs = nextAvailable.getTime() - new Date().getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          const timeStr = `${diffHours > 0 ? `${diffHours}h ` : ""}${diffMins}m`;
+
           return NextResponse.json({ 
             error: 'Dynamic Cooldown Active', 
-            message: `Vehicle ${plateNumber} refueled ${lastServed.litersPumped}L at ${lastServed.station.name}. Based on consumption logic, your next refuel is authorized after ${nextAvailable.toLocaleString()}.` 
+            message: `REFUEL DENIED: Vehicle ${plateNumber} was recently served ${lastServed.litersPumped}L at ${lastServed.station.name}. Based on fuel consumption standards, you must wait another ${timeStr}. Authorized after ${nextAvailable.toLocaleTimeString()}.` 
           }, { status: 403 });
         }
       }
