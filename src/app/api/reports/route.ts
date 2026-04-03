@@ -192,24 +192,29 @@ export async function POST(request: Request) {
         }, { status: 400 });
       }
 
-      // ARBITRAGE CHECK: Check if vehicle was served within the last 24 hours
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const recentServed = await prisma.queueEntry.findFirst({
+      // DYNAMIC ARBITRAGE CHECK: Calculate cooldown based on previous refuel amount
+      const lastServed = await prisma.queueEntry.findFirst({
         where: {
           plateNumber,
           status: 'SERVED',
-          servedAt: { gte: twentyFourHoursAgo }
         },
         orderBy: { servedAt: 'desc' },
         include: { station: true }
       });
 
-      if (recentServed) {
-        const nextAvailable = new Date(recentServed.servedAt!.getTime() + 24 * 60 * 60 * 1000);
-        return NextResponse.json({ 
-          error: 'Arbitrage Alert', 
-          message: `Vehicle ${plateNumber} was served within the last 24 hours at ${recentServed.station.name}. Next refuel allowed after ${nextAvailable.toLocaleString()}.` 
-        }, { status: 403 });
+      if (lastServed && lastServed.servedAt && lastServed.litersPumped) {
+        // Consumption Rates (Liters per hour of continuous driving)
+        const rate = lastServed.fuelType === 'Gasoline' ? 8 : 4; 
+        const cooldownHours = Math.max(4, lastServed.litersPumped / rate); // Minimum 4 hours regardless of amount
+        
+        const nextAvailable = new Date(lastServed.servedAt.getTime() + cooldownHours * 60 * 60 * 1000);
+        
+        if (new Date() < nextAvailable) {
+          return NextResponse.json({ 
+            error: 'Dynamic Cooldown Active', 
+            message: `Vehicle ${plateNumber} refueled ${lastServed.litersPumped}L at ${lastServed.station.name}. Based on consumption logic, your next refuel is authorized after ${nextAvailable.toLocaleString()}.` 
+          }, { status: 403 });
+        }
       }
 
       const lastEntry = await prisma.queueEntry.findFirst({
