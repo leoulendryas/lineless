@@ -74,6 +74,7 @@ interface Station {
   type: 'fuel' | 'charging' | 'parking' | 'car_wash';
   isPartner?: boolean;
   queueCount?: number;
+  currentServing?: number;
   amenities: {
     shop: boolean;
     cafe: boolean;
@@ -144,7 +145,7 @@ interface QueueEntry {
   isWithinRange: boolean;
   createdAt: string;
   updatedAt: string;
-  station?: Station;
+  station: Station;
 }
 
 interface TelegramUser {
@@ -550,8 +551,15 @@ const MapComponent: React.FC = () => {
                   </span>
                   <h3 className="font-black tracking-tighter text-2xl uppercase italic leading-none">#{activeQueueEntry.ticketNumber}</h3>
                 </div>
-                <div className={`px-3 py-1 rounded-sm text-[8px] font-black uppercase tracking-widest border-2 ${activeQueueEntry.status === 'ACTIVE' ? 'bg-green-500 border-green-500 text-white' : 'bg-transparent border-white/20 dark:border-zinc-950/20'}`}>
-                  {activeQueueEntry.status}
+                <div className="flex flex-col items-end gap-1">
+                  <div className={`px-3 py-1 rounded-sm text-[8px] font-black uppercase tracking-widest border-2 ${activeQueueEntry.status === 'ACTIVE' ? 'bg-green-500 border-green-500 text-white' : 'bg-transparent border-white/20 dark:border-zinc-950/20'}`}>
+                    {activeQueueEntry.status}
+                  </div>
+                  {activeQueueEntry.station?.currentServing !== undefined && (
+                    <span className="text-[7px] font-black uppercase tracking-widest opacity-60 mt-1">
+                      Now Serving: #{activeQueueEntry.station.currentServing}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col gap-4 border-t border-white/10 dark:border-zinc-950/10 pt-6">
@@ -611,8 +619,13 @@ const MapComponent: React.FC = () => {
                       {s.isPartner && (
                         <div className="mb-6 p-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm flex justify-between items-center shadow-lg border border-zinc-800 dark:border-zinc-200">
                            <div className="flex flex-col">
-                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Digital Queue Depth</span>
-                              <span className="text-xl font-black tracking-tighter italic uppercase">{s.queueCount || 0} Registered</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Digital Queue Progress</span>
+                              <div className="flex items-baseline gap-3">
+                                <span className="text-xl font-black tracking-tighter italic uppercase">{s.queueCount || 0} Waiting</span>
+                                {s.currentServing !== undefined && s.currentServing > 0 && (
+                                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60 border-l border-white/20 dark:border-zinc-950/20 pl-3">Serving #{s.currentServing}</span>
+                                )}
+                              </div>
                            </div>
                            <ChevronDown size={18} className="animate-bounce opacity-40" />
                         </div>

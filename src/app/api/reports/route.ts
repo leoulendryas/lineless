@@ -34,8 +34,9 @@ export async function GET() {
           },
           queueEntries: {
             where: {
-              status: { in: ['WAITING', 'ACTIVE'] }
-            }
+              status: { in: ['WAITING', 'ACTIVE', 'SERVED'] }
+            },
+            orderBy: { ticketNumber: 'desc' }
           }
         }
       }),
@@ -83,12 +84,16 @@ export async function GET() {
         };
       };
 
+      const activeQueue = station.queueEntries.filter(e => e.status !== 'SERVED');
+      const lastServed = station.queueEntries.find(e => e.status === 'SERVED');
+
       return {
         ...station,
         Benzene: getStats('Benzene'),
         Gasoline: getStats('Gasoline'),
         Electric: getStats('Electric'),
-        queueCount: station.queueEntries.length
+        queueCount: activeQueue.length,
+        currentServing: lastServed?.ticketNumber || 0
       };
     });
 
