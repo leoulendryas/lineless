@@ -30,6 +30,7 @@ const TerminalPage = () => {
   const [station, setStation] = useState<Station | null>(null);
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [stats, setStats] = useState({ totalRegistered: 0, activeCount: 0, currentTicket: 0 });
+  const [resources, setResources] = useState<Record<string, boolean>>({ Benzene: true, Gasoline: true, Electric: true });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isInitializing, setIsInitializing] = useState(true);
@@ -45,6 +46,37 @@ const TerminalPage = () => {
       console.error('Poll failed', e);
     }
   }, [station]);
+
+  const toggleStock = async (fuelType: string) => {
+    if (!station) return;
+    const currentStatus = resources[fuelType];
+    const newStatus = !currentStatus;
+    
+    try {
+      // Use the existing reports API to broadcast official terminal status
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          externalId: station.id, 
+          name: station.name,
+          type: station.type,
+          lat: 0, 
+          lon: 0, 
+          fuelType,
+          status: newStatus ? 'Available' : 'Out of Stock',
+          queue: 'Official Update',
+          isPartner: true
+        })
+      });
+
+      if (res.ok) {
+        setResources(prev => ({ ...prev, [fuelType]: newStatus }));
+      }
+    } catch (e) {
+      console.error('Stock update failed', e);
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('lineless_terminal_station');
@@ -177,6 +209,23 @@ const TerminalPage = () => {
         </div>
       </div>
 
+      {/* Resource Management Bar */}
+      <div className="bg-zinc-100 border-b-2 border-zinc-200 p-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-6">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 border-r border-zinc-200 pr-6">Resource Control</span>
+          <div className="flex gap-4">
+            {station.type === 'fuel' ? (
+              <>
+                <StockToggle label="Benzene" active={resources.Benzene} onToggle={() => toggleStock('Benzene')} />
+                <StockToggle label="Diesel" active={resources.Gasoline} onToggle={() => toggleStock('Gasoline')} />
+              </>
+            ) : (
+              <StockToggle label="Electric" active={resources.Electric} onToggle={() => toggleStock('Electric')} />
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main Terminal List */}
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-10">
         <div className="flex flex-col gap-10">
@@ -280,6 +329,20 @@ const StatCard = ({ label, value, icon, color, animate }: StatCardProps) => (
     </div>
     <div className="text-4xl font-black tracking-tighter text-zinc-950">{value}</div>
   </div>
+);
+
+const StockToggle = ({ label, active, onToggle }: { label: string, active: boolean, onToggle: () => void }) => (
+  <button 
+    onClick={onToggle}
+    className={`px-4 py-2 border-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${
+      active 
+      ? 'bg-white border-zinc-950 text-zinc-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' 
+      : 'bg-zinc-200 border-zinc-300 text-zinc-400 opacity-60'
+    }`}
+  >
+    <div className={`w-2 h-2 rounded-full ${active ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+    {label}: {active ? 'Available' : 'Out of Stock'}
+  </button>
 );
 
 export default TerminalPage;

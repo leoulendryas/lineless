@@ -982,11 +982,17 @@ const MapComponent: React.FC = () => {
                   >
                     {showQueueJoin.type === 'fuel' ? (
                       <>
-                        <option value="Benzene">Benzene</option>
-                        <option value="Gasoline">Diesel</option>
+                        <option value="Benzene" disabled={showQueueJoin.reports.Benzene.latest?.status === 'Out of Stock'}>
+                          Benzene {showQueueJoin.reports.Benzene.latest?.status === 'Out of Stock' ? '(OUT)' : ''}
+                        </option>
+                        <option value="Gasoline" disabled={showQueueJoin.reports.Gasoline.latest?.status === 'Out of Stock'}>
+                          Diesel {showQueueJoin.reports.Gasoline.latest?.status === 'Out of Stock' ? '(OUT)' : ''}
+                        </option>
                       </>
                     ) : (
-                      <option value="Electric">Electric</option>
+                      <option value="Electric" disabled={showQueueJoin.reports.Electric.latest?.status === 'Out of Stock'}>
+                        Electric {showQueueJoin.reports.Electric.latest?.status === 'Out of Stock' ? '(OUT)' : ''}
+                      </option>
                     )}
                   </select>
                   <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
