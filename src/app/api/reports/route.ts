@@ -192,23 +192,23 @@ export async function POST(request: Request) {
         }, { status: 400 });
       }
 
-      // ARBITRAGE CHECK: Check if vehicle was served within the last 4 hours
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      // ARBITRAGE CHECK: Check if vehicle was served within the last 24 hours
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const recentServed = await prisma.queueEntry.findFirst({
         where: {
           plateNumber,
           status: 'SERVED',
-          servedAt: { gte: fourHoursAgo }
+          servedAt: { gte: twentyFourHoursAgo }
         },
         orderBy: { servedAt: 'desc' },
         include: { station: true }
       });
 
       if (recentServed) {
-        const nextAvailable = new Date(recentServed.servedAt!.getTime() + 4 * 60 * 60 * 1000);
+        const nextAvailable = new Date(recentServed.servedAt!.getTime() + 24 * 60 * 60 * 1000);
         return NextResponse.json({ 
           error: 'Arbitrage Alert', 
-          message: `Vehicle ${plateNumber} was recently served at ${recentServed.station.name}. Next refuel allowed after ${nextAvailable.toLocaleTimeString()}.` 
+          message: `Vehicle ${plateNumber} was served within the last 24 hours at ${recentServed.station.name}. Next refuel allowed after ${nextAvailable.toLocaleString()}.` 
         }, { status: 403 });
       }
 
