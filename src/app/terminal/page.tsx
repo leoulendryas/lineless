@@ -116,6 +116,11 @@ const TerminalPage = () => {
   };
 
   const handleAction = async (queueId: string, action: 'SERVED' | 'NO_SHOW', liters?: string) => {
+    if (action === 'SERVED') {
+      const confirmMsg = `Confirm fueling for ${liters}L? This will be recorded for government audit.`;
+      if (!window.confirm(confirmMsg)) return;
+    }
+
     try {
       const res = await fetch('/api/terminal/queue', {
         method: 'POST',

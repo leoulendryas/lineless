@@ -263,6 +263,22 @@ const MapComponent: React.FC = () => {
     if (!user) return setShowAuthPrompt(true);
     if (!showQueueJoin) return;
     
+    // ETHIOPIAN STANDARDS VALIDATION
+    // 1. Phone: 09... or 07... (10 digits)
+    const phoneRegex = /^(09|07)\d{8}$/;
+    if (!phoneRegex.test(queueForm.phone)) {
+      return alert('INVALID PHONE: Must start with 09 or 07 and be 10 digits long.');
+    }
+
+    // 2. Plate: Region + Category + 5 Digits (e.g., AA 2 12345)
+    // Common regions: AA, ET, OR, AM, TR, SN, DR, AF, GJ, BG, SM, GN
+    const plateRegex = /^[A-Z]{2}\s\d{1}\s\d{5}$/;
+    const sanitizedPlate = queueForm.plate.replace('-', ' ').replace(/\s+/g, ' ').trim();
+    
+    if (!plateRegex.test(sanitizedPlate)) {
+      return alert('INVALID PLATE: Use standard format (e.g., AA 2 12345).');
+    }
+
     try {
       const res = await fetch('/api/reports', {
         method: 'POST',
@@ -274,7 +290,7 @@ const MapComponent: React.FC = () => {
           type: showQueueJoin.type,
           lat: showQueueJoin.lat,
           lon: showQueueJoin.lon,
-          plateNumber: queueForm.plate,
+          plateNumber: sanitizedPlate,
           phoneNumber: queueForm.phone,
           fuelType: queueForm.fuelType
         })
