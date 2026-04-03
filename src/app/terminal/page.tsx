@@ -54,19 +54,15 @@ const TerminalPage = () => {
     
     try {
       // Use the existing reports API to broadcast official terminal status
+      const key = localStorage.getItem('lineless_terminal_key');
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          externalId: station.id, 
-          name: station.name,
-          type: station.type,
-          lat: 0, 
-          lon: 0, 
+          accessKey: key, 
           fuelType,
           status: newStatus ? 'Available' : 'Out of Stock',
-          queue: 'Official Update',
-          isPartner: true
+          queue: 'Official Update'
         })
       });
 

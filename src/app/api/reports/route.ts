@@ -114,22 +114,34 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('lineless_user_id')?.value;
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { 
       externalId, name, type, lat, lon, 
       fuelType, status, queue, 
       reportId, action,
-      isQueueJoin, plateNumber, phoneNumber
+      isQueueJoin, plateNumber, phoneNumber,
+      accessKey // Terminal provides this
     } = body;
 
-    // Handle Upvote/Downvote
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('lineless_user_id')?.value;
+    
+    // Auth Check: Must have either a valid session OR a valid accessKey for a partner
+    let authenticatedStationId = null;
+    
+    if (accessKey) {
+      const stationMatch = await prisma.station.findUnique({
+        where: { accessKey }
+      });
+      if (!stationMatch) return NextResponse.json({ error: 'Invalid Access Key' }, { status: 401 });
+      authenticatedStationId = stationMatch.id;
+    } else if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Handle Upvote/Downvote (Users Only)
     if (reportId && action) {
+      if (!userId) return NextResponse.json({ error: 'Login required to vote' }, { status: 401 });
       const report = await prisma.report.findUnique({
         where: { id: reportId }
       });
@@ -153,30 +165,34 @@ export async function POST(request: Request) {
     }
 
     // Upsert Station
+    // If we have an accessKey, we don't need to upsert via provided name/lat/lon unless they are changed
+    const targetExternalId = accessKey ? (await prisma.station.findUnique({ where: { accessKey }, select: { externalId: true } }))?.externalId : externalId;
+    
     const station = await prisma.station.upsert({
-      where: { externalId: String(externalId) },
+      where: { externalId: String(targetExternalId) },
       update: { 
-        name, 
-        type, 
-        lat, 
-        lon,
-        // Only update these if they are provided (e.g. from Admin Panel)
+        ...(name && { name }), 
+        ...(type && { type }), 
+        ...(lat !== undefined && { lat: parseFloat(lat) }), 
+        ...(lon !== undefined && { lon: parseFloat(lon) }),
         ...(body.isPartner !== undefined && { isPartner: body.isPartner }),
         ...(body.accessKey && { accessKey: body.accessKey })
       },
       create: { 
-        externalId: String(externalId), 
-        name, 
-        type, 
-        lat, 
-        lon,
+        externalId: String(targetExternalId), 
+        name: name || "New Station", 
+        type: type || "fuel", 
+        lat: parseFloat(lat) || 0, 
+        lon: parseFloat(lon) || 0,
         isPartner: body.isPartner || false,
         accessKey: body.accessKey || null
       },
     });
 
-    // Handle Queue Join
+    // Handle Queue Join (Users Only)
     if (isQueueJoin) {
+      if (!userId) return NextResponse.json({ error: 'Login required to join queue' }, { status: 401 });
+      
       // Check for existing active registration
       const existingActive = await prisma.queueEntry.findFirst({
         where: {
@@ -252,7 +268,7 @@ export async function POST(request: Request) {
         fuelType,
         status,
         queue,
-        userId
+        userId: userId || null
       }
     });
 
