@@ -234,7 +234,7 @@ export async function POST(request: Request) {
           return NextResponse.json({ 
             error: 'Dynamic Cooldown Active', 
             message: `REFUEL DENIED: Vehicle ${plateNumber} was recently served ${lastServed.litersPumped}L at ${lastServed.station.name}. Based on fuel consumption standards, you must wait another ${timeStr}. Authorized after ${nextAvailable.toLocaleTimeString()}.` 
-          }, { status: 403 });
+          }, { status: 429 });
         }
       }
 
