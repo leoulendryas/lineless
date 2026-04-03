@@ -202,6 +202,7 @@ export async function POST(request: Request) {
           ticketNumber,
           plateNumber,
           phoneNumber,
+          fuelType: fuelType || 'Benzene',
           status: 'WAITING'
         }
       });

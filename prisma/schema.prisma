@@ -44,6 +44,7 @@ model QueueEntry {
   ticketNumber  Int
   plateNumber   String
   phoneNumber   String
+  fuelType      String   @default("Benzene") // Benzene, Diesel, Electric
   status        String   @default("WAITING") // WAITING, ACTIVE, SERVED, NO_SHOW, CANCELED
   isWithinRange Boolean  @default(false)
   createdAt     DateTime @default(now())

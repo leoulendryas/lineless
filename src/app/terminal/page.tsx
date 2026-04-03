@@ -8,6 +8,7 @@ interface QueueEntry {
   ticketNumber: number;
   plateNumber: string;
   phoneNumber: string;
+  fuelType: string;
   status: 'WAITING' | 'ACTIVE' | 'SERVED' | 'NO_SHOW';
   isWithinRange: boolean;
   user: {
@@ -197,6 +198,10 @@ const TerminalPage = () => {
                         <div className="flex flex-col">
                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-1">Plate Number</span>
                            <span className="text-xl font-black text-zinc-950 tracking-tighter leading-none uppercase">{entry.plateNumber}</span>
+                        </div>
+                        <div className="flex flex-col border-l-2 border-zinc-100 pl-4 ml-4">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-1">Resource</span>
+                           <span className="text-xl font-black text-zinc-950 tracking-tighter leading-none uppercase">{entry.fuelType}</span>
                         </div>
                       </div>
                     </div>

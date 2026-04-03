@@ -139,6 +139,7 @@ interface QueueEntry {
   ticketNumber: number;
   plateNumber: string;
   phoneNumber: string;
+  fuelType: string;
   status: 'WAITING' | 'ACTIVE' | 'SERVED' | 'NO_SHOW' | 'CANCELED';
   isWithinRange: boolean;
   createdAt: string;
@@ -175,7 +176,7 @@ const MapComponent: React.FC = () => {
   // New Queue States
   const [activeQueueEntry, setActiveQueueEntry] = useState<QueueEntry | null>(null);
   const [showQueueJoin, setShowQueueJoin] = useState<Station | null>(null);
-  const [queueForm, setQueueForm] = useState({ plate: '', phone: '' });
+  const [queueForm, setQueueForm] = useState({ plate: '', phone: '', fuelType: 'Benzene' });
 
   useEffect(() => { 
     fetchAllStations(); 
@@ -272,7 +273,8 @@ const MapComponent: React.FC = () => {
           lat: showQueueJoin.lat,
           lon: showQueueJoin.lon,
           plateNumber: queueForm.plate,
-          phoneNumber: queueForm.phone
+          phoneNumber: queueForm.phone,
+          fuelType: queueForm.fuelType
         })
       });
       const data = await res.json();
@@ -556,6 +558,10 @@ const MapComponent: React.FC = () => {
                  <div className="flex justify-between items-center">
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Plate</span>
                     <span className="text-[12px] font-black uppercase tracking-widest">{activeQueueEntry.plateNumber}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Resource</span>
+                    <span className="text-[12px] font-black uppercase tracking-widest italic">{activeQueueEntry.fuelType || 'Benzene'}</span>
                  </div>
                  <div className="flex justify-between items-center">
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Range Status</span>
@@ -935,6 +941,25 @@ const MapComponent: React.FC = () => {
             <p className="text-zinc-400 dark:text-zinc-500 text-[11px] font-black uppercase tracking-[0.3em] mb-12 border-b border-zinc-100 dark:border-zinc-800 pb-6">Join Digital Queue for {showQueueJoin.name}</p>
             
             <div className="space-y-8">
+              <FormGroup label="Resource Type">
+                <div className="relative">
+                  <select 
+                    value={queueForm.fuelType}
+                    onChange={(e) => setQueueForm({ ...queueForm, fuelType: e.target.value })}
+                    className="w-full h-14 px-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] font-black uppercase tracking-widest outline-none appearance-none cursor-pointer focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 transition-all text-zinc-900 dark:text-zinc-50"
+                  >
+                    {showQueueJoin.type === 'fuel' ? (
+                      <>
+                        <option value="Benzene">Benzene</option>
+                        <option value="Gasoline">Diesel</option>
+                      </>
+                    ) : (
+                      <option value="Electric">Electric</option>
+                    )}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400" />
+                </div>
+              </FormGroup>
               <FormGroup label="Plate Number">
                 <input 
                   type="text" 
