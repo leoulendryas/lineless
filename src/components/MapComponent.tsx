@@ -303,7 +303,7 @@ const MapComponent: React.FC = () => {
         // Refresh stations to show updated counts
         fetchAllStations();
       } else if (data.error) {
-        alert(data.error);
+        alert(data.message || data.error);
       }
     } catch (e) { console.error('Join failed', e); }
   };
@@ -430,7 +430,13 @@ const MapComponent: React.FC = () => {
       method: 'POST',
       body: JSON.stringify({ externalId: String(station.id), name: station.name, type: station.type, lat: station.lat, lon: station.lon, fuelType, status, queue })
     });
-    if (res.ok) { fetchAllStations(); setSelectedStation(null); }
+    if (res.ok) { 
+      fetchAllStations(); 
+      setSelectedStation(null); 
+    } else {
+      const data = await res.json();
+      alert(data.message || data.error || 'Failed to submit report');
+    }
   };
 
   const locateUser = () => {
@@ -452,7 +458,7 @@ const MapComponent: React.FC = () => {
       if (res.ok) fetchAllStations();
       else {
         const errorData = await res.json();
-        if (errorData.error) alert(errorData.error);
+        alert(errorData.message || errorData.error || 'Action failed');
       }
     } catch (e) { console.error('Vote failed', e); }
   };
