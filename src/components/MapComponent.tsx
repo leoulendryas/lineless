@@ -820,10 +820,29 @@ const MapComponent: React.FC = () => {
                     autoPan={true}
                   >
                     <div className="min-w-[300px] md:min-w-[360px] p-2 bg-white dark:bg-zinc-950 transition-colors">
-                      <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-5">
+                      <div className="flex justify-between items-center mb-6 border-b border-zinc-100 dark:border-zinc-800 pb-5 px-2">
                         <h3 className="font-black text-xl tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase italic leading-none">{station.name}</h3>
                         <div className={`w-3 h-3 rounded-full ${colorClass} border border-white dark:border-zinc-900 shadow-sm`}></div>
                       </div>
+
+                      {/* Immediate Queue View for Partners */}
+                      {station.isPartner && (
+                        <div className="mb-6 mx-2 p-4 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-sm flex justify-between items-center shadow-lg border border-zinc-800 dark:border-zinc-200">
+                           <div className="flex flex-col">
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Digital Queue</span>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-lg font-black tracking-tighter italic uppercase">{station.queueCount || 0} Waiting</span>
+                                {station.currentServing !== undefined && station.currentServing > 0 && (
+                                  <span className="text-[9px] font-black uppercase tracking-widest opacity-60 border-l border-white/20 dark:border-zinc-950/20 pl-2">Serving #{station.currentServing}</span>
+                                )}
+                              </div>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                             <span className="text-[7px] font-black uppercase tracking-widest opacity-40">Live</span>
+                           </div>
+                        </div>
+                      )}
                       
                       {station.type === 'fuel' || station.type === 'charging' ? (
                         <div className="space-y-4">
